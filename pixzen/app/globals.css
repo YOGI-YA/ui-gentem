@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  --font-satoshi: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #0a0a0a;
+  --color-background-soft: #141414;
+  --color-foreground: #f5f3ef;
+  --color-muted: #8e8e8e;
+  --color-border: #ffffff1f;
+
+  --breakpoint-xs: 420px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background: var(--color-background);
+    scroll-behavior: auto;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-satoshi);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-foreground);
+    color: var(--color-background);
+  }
+
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-foreground);
+    outline-offset: 3px;
+  }
+}
+
+/* ---------- Fixed film-grain texture over the entire site ---------- */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* ---------- Halftone dot overlay for the hero ---------- */
+.halftone {
+  background-image: radial-gradient(
+    rgba(245, 243, 239, 0.55) 1px,
+    transparent 1.4px
+  );
+  background-size: 5px 5px;
+  mix-blend-mode: overlay;
+}
+
+/* ---------- Infinite marquee ---------- */
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-left 34s linear infinite;
+}
+
+.marquee-group:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* ---------- Blinking type cursor ---------- */
+@keyframes blink-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.type-cursor {
+  animation: blink-caret 0.9s step-end infinite;
+}
+
+/* ---------- Utility: hide scrollbar for horizontal rails ---------- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
