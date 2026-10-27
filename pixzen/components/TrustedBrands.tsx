@@ -31,12 +31,7 @@ export default function TrustedBrands() {
         <p className="text-[11px] tracking-[0.3em] text-muted uppercase">
           {trustBadge.eyebrow}
         </p>
-        <p className="mt-3 text-xl font-medium sm:text-2xl tracking-tight">
-          {trustBadge.heading}
-        </p>
-        <p className="mt-3 text-sm text-muted leading-relaxed">
-          {trustBadge.copy}
-        </p>
+       
       </div>
     </section>
   );
