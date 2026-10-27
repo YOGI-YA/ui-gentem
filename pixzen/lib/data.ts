@@ -2,7 +2,7 @@ export const personalInfo = {
   name: "Yogender Verma",
   role: "Full-Stack Developer & AI Systems Engineer",
   email: "yogender.tech@gmail.com",
-  github: "https://github.com/YogenderVermaa",
+  github: "https://github.com/Yogi-ya",
   linkedin: "https://www.linkedin.com/in/yogendervermaa/",
   twitter: "https://x.com/yogendervermaa",
   portfolio: "https://yogender.me",

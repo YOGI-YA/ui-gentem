@@ -39,7 +39,7 @@ export default function Navbar() {
             href="#"
             className="flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase"
           >
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            {/* <span className="h-2 w-2 rounded-full bg-emerald-500" /> */}
             {personalInfo.name}
           </a>
 

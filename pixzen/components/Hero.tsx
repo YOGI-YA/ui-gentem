@@ -67,7 +67,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center leading-[1.05] font-medium tracking-tight max-w-4xl"
+          className="flex flex-col items-center leading-[1.05] font-medium tracking-tight max-w-6xl"
         >
           <span className="text-[5.5vw] sm:text-[4vw] lg:text-[2.6vw] text-muted font-normal">
             {heroPrefix}
@@ -78,16 +78,16 @@ export default function Hero() {
           </span>
         </motion.h1>
 
-        <motion.p
+        {/* <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-8 max-w-xl text-base text-muted sm:text-lg leading-relaxed"
         >
           {personalInfo.bio}
-        </motion.p>
+        </motion.p> */}
 
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55 }}
@@ -118,7 +118,7 @@ export default function Hero() {
           >
             CONTACT
           </a>
-        </motion.div>
+        </motion.div> */}
       </div>
 
       <motion.div
