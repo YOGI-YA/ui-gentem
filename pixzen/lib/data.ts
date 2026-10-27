@@ -95,12 +95,22 @@ export const services: Service[] = [
   },
 ];
 
+export type ProjectMetric = {
+  label: string;
+  value: string;
+};
+
 export type Project = {
   id: string;
   title: string;
   client: string;
   year: string;
   category: string;
+  filterCategory: "all" | "ai" | "security" | "devtools";
+  status: string;
+  metrics: ProjectMetric[];
+  accentColor: string;
+  gradient: string;
   stack: string[];
   image: string;
   summary: string;
@@ -116,11 +126,20 @@ export const projects: Project[] = [
     client: "Autonomous Multi-Agent Intelligence",
     year: "2025 – 2026",
     category: "AI Systems · Full-Stack",
+    filterCategory: "ai",
+    status: "Live in Production",
+    accentColor: "#10b981",
+    gradient: "from-emerald-500/20 via-teal-500/10 to-transparent",
+    metrics: [
+      { label: "Query Latency", value: "<100ms" },
+      { label: "Pipeline", value: "Multi-Agent" },
+      { label: "Vector Search", value: "Hybrid RAG" },
+    ],
     stack: ["Next.js 15", "TypeScript", "AI Agents", "Vector DB", "TailwindCSS"],
     image:
       "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1800&auto=format&fit=crop",
     summary:
-      "An intelligent multi-agent platform and reasoning system designed for real-time semantic retrieval, autonomous research, and high-velocity workflows.",
+      "An autonomous multi-agent intelligence platform designed for real-time semantic research, hybrid RAG retrieval, and high-velocity reasoning workflows.",
     details: [
       "Autonomous multi-agent orchestration pipeline with real-time streaming responses",
       "Hybrid search and RAG architecture for context-accurate knowledge synthesis",
@@ -136,6 +155,15 @@ export const projects: Project[] = [
     client: "Automated Knowledge Synthesis",
     year: "2025",
     category: "AI Product · Publishing Engine",
+    filterCategory: "ai",
+    status: "Active Release",
+    accentColor: "#8b5cf6",
+    gradient: "from-purple-500/20 via-indigo-500/10 to-transparent",
+    metrics: [
+      { label: "Synthesis Rate", value: "10k+ Pgs" },
+      { label: "Context Window", value: "128k Tokens" },
+      { label: "Formats", value: "PDF & ePub" },
+    ],
     stack: ["Next.js", "React", "TypeScript", "LLM Workflows", "Node.js"],
     image:
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1800&auto=format&fit=crop",
@@ -156,6 +184,15 @@ export const projects: Project[] = [
     client: "Zero-Knowledge Media Security",
     year: "2024 – 2025",
     category: "Security · Web Application",
+    filterCategory: "security",
+    status: "Enterprise Ready",
+    accentColor: "#06b6d4",
+    gradient: "from-cyan-500/20 via-blue-500/10 to-transparent",
+    metrics: [
+      { label: "Encryption", value: "AES-GCM 256" },
+      { label: "Bandwidth Cut", value: "-45%" },
+      { label: "Server Knowledge", value: "0% Zero-Logs" },
+    ],
     stack: ["React", "TypeScript", "Web Crypto API", "Cloud Storage", "PostgreSQL"],
     image:
       "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1800&auto=format&fit=crop",
@@ -176,6 +213,15 @@ export const projects: Project[] = [
     client: "Open Source Tooling & Architecture",
     year: "2024",
     category: "Dev Tools · Architecture",
+    filterCategory: "devtools",
+    status: "Open Source",
+    accentColor: "#f59e0b",
+    gradient: "from-amber-500/20 via-orange-500/10 to-transparent",
+    metrics: [
+      { label: "Type Safety", value: "Strict 100%" },
+      { label: "Bundle Overhead", value: "0 kB Runtime" },
+      { label: "DX Velocity", value: "3x Faster" },
+    ],
     stack: ["Next.js", "TypeScript", "TailwindCSS", "PostgreSQL", "Prisma"],
     image:
       "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1800&auto=format&fit=crop",
