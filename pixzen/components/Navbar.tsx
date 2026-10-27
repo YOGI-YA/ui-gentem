@@ -59,7 +59,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-4">
             <a
-              href="#contact"
+              href="https://cal.com/yogender/30min"
               className="hidden rounded-full border border-foreground px-5 py-2 text-xs tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background md:inline-block font-medium"
             >
               LET&apos;S TALK
@@ -98,7 +98,7 @@ export default function Navbar() {
               </motion.a>
             ))}
             <motion.a
-              href="#contact"
+              href="https://cal.com/yogender/30min"
               onClick={() => setMenuOpen(false)}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
