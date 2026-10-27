@@ -3,7 +3,7 @@ import Hero from "@/components/Hero";
 import TrustedBrands from "@/components/TrustedBrands";
 import Services from "@/components/Services";
 import FeaturedWork from "@/components/FeaturedWork";
-import Testimonials from "@/components/Testimonials";
+import Experience from "@/components/Experience";
 import About from "@/components/About";
 import Insights from "@/components/Insights";
 import Contact from "@/components/Contact";
@@ -18,7 +18,7 @@ export default function Home() {
         <TrustedBrands />
         <Services />
         <FeaturedWork />
-        <Testimonials />
+        <Experience />
         <About />
         <Insights />
         <Contact />

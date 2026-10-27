@@ -51,14 +51,7 @@ export default function About() {
   return (
     <section id="about" className="border-b border-border py-28 md:py-36">
       <div className="mx-auto max-w-[1100px] px-6 md:px-10">
-        <div className="flex flex-col gap-2 mb-10">
-          <p className="text-xs tracking-[0.3em] text-muted uppercase">
-            ABOUT & PHILOSOPHY
-          </p>
-          <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-foreground/80">
-            {personalInfo.name} — {personalInfo.role}
-          </h2>
-        </div>
+        
 
         <p
           ref={textRef}
@@ -67,20 +60,7 @@ export default function About() {
           {manifesto}
         </p>
 
-        <div className="mt-14 grid grid-cols-1 gap-8 border-t border-border pt-10 sm:grid-cols-3">
-          <div>
-            <p className="text-xs tracking-[0.2em] text-muted uppercase">LOCATION</p>
-            <p className="mt-2 text-base font-medium">{personalInfo.location}</p>
-          </div>
-          <div>
-            <p className="text-xs tracking-[0.2em] text-muted uppercase">SPECIALTY</p>
-            <p className="mt-2 text-base font-medium">Next.js, TypeScript & AI Systems</p>
-          </div>
-          <div>
-            <p className="text-xs tracking-[0.2em] text-muted uppercase">AVAILABILITY</p>
-            <p className="mt-2 text-base font-medium text-emerald-400">Available for Opportunities</p>
-          </div>
-        </div>
+      
       </div>
 
       <div className="mt-24 overflow-hidden border-y border-border py-8">

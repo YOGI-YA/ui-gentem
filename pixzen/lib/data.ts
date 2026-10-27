@@ -13,6 +13,7 @@ export const personalInfo = {
 export const navLinks = [
   { label: "Work", href: "#work" },
   { label: "Expertise", href: "#expertise" },
+  { label: "Experience", href: "#experience" },
   { label: "About", href: "#about" },
   { label: "Insights", href: "#insights" },
   { label: "Contact", href: "#contact" },
@@ -190,41 +191,86 @@ export const projects: Project[] = [
   },
 ];
 
-export type Testimonial = {
+export type Experience = {
   id: string;
-  quote: string;
-  name: string;
+  index: string;
+  period: string;
   role: string;
+  company: string;
+  location: string;
+  type: string;
+  description: string;
+  highlights: string[];
+  skills: string[];
 };
 
-export const testimonials: Testimonial[] = [
+export const experiences: Experience[] = [
   {
-    id: "t1",
-    quote:
-      "Yogender brings a rare combination of deep architectural acumen and sharp product design. He built our AI agent workflows with incredible speed and production reliability.",
-    name: "Engineering Lead",
-    role: "Collaborator · AI Platform",
+    id: "exp-1",
+    index: "01",
+    period: "2024 — Present",
+    role: "Full-Stack & AI Systems Engineer",
+    company: "Independent / Stealth Startups",
+    location: "Remote",
+    type: "Contract & Products",
+    description:
+      "Architecting AI-native platforms, autonomous multi-agent pipelines, and high-velocity web applications with Next.js 15, TypeScript, and modern vector databases.",
+    highlights: [
+      "Engineered end-to-end RAG retrieval pipelines and multi-agent systems with streaming LLM responses and sub-100ms UI latency.",
+      "Architected type-safe API backends with PostgreSQL, Prisma, Redis caching, and edge cloud deployments.",
+      "Built production-ready web products from high-fidelity UI design systems to cloud deployment.",
+    ],
+    skills: ["Next.js 15", "React 19", "TypeScript", "AI Agents", "RAG", "PostgreSQL", "Tailwind CSS"],
   },
   {
-    id: "t2",
-    quote:
-      "The precision and attention to detail in his code is top tier. From snappy Next.js rendering to robust backend APIs, everything he ships feels polished and rock-solid.",
-    name: "Product Founder",
-    role: "Tech Startup",
+    id: "exp-2",
+    index: "02",
+    period: "2023 — 2024",
+    role: "Senior Frontend & Web Developer",
+    company: "Client Collaborations & Digital Products",
+    location: "Remote",
+    type: "Full-Time / Freelance",
+    description:
+      "Led frontend development for high-conversion web applications, interactive SaaS dashboards, and responsive design systems.",
+    highlights: [
+      "Built fluid, tactile web applications utilizing React Server Components, GSAP, and Framer Motion for 60fps animations.",
+      "Refactored complex state management and asset delivery pipelines, reducing first contentful paint (FCP) by 40%.",
+      "Created modular, accessible design system component libraries adopted across multi-repository codebases.",
+    ],
+    skills: ["React", "Next.js", "TypeScript", "GSAP", "Framer Motion", "REST / GraphQL"],
   },
   {
-    id: "t3",
-    quote:
-      "Working with Yogender was effortless. He immediately grasped the core technical bottlenecks, refactored our system, and delivered a 3x improvement in throughput.",
-    name: "Senior Software Architect",
-    role: "Open Source Community",
+    id: "exp-3",
+    index: "03",
+    period: "2022 — 2023",
+    role: "Full-Stack Software Developer",
+    company: "Web & SaaS Solutions",
+    location: "Remote",
+    type: "Engineering",
+    description:
+      "Engineered scalable web architectures, database schemas, secure authentication pipelines, and automated cloud workflows.",
+    highlights: [
+      "Designed secure database architectures and RESTful microservices with Node.js, Express, MongoDB, and PostgreSQL.",
+      "Implemented client-side encryption and secure credential management using modern Web Crypto APIs.",
+      "Collaborated with cross-functional teams to ship feature releases in high-velocity agile sprints.",
+    ],
+    skills: ["Node.js", "Express", "PostgreSQL", "MongoDB", "Web Crypto API", "Docker"],
   },
   {
-    id: "t4",
-    quote:
-      "Exceptional front-of-the-stack craftsmanship. He knows how to make interfaces feel tactile, fast, and alive while maintaining spotless code discipline.",
-    name: "Design Systems Lead",
-    role: "Digital Studio",
+    id: "exp-4",
+    index: "04",
+    period: "2021 — 2022",
+    role: "Frontend Developer & UI Engineer",
+    company: "Creative Tech & Web Studio",
+    location: "Remote",
+    type: "Frontend",
+    description:
+      "Crafted interactive digital experiences, responsive client portfolios, and modern web applications.",
+    highlights: [
+      "Built responsive, mobile-first web experiences with modern CSS, semantic HTML, and fluid micro-interactions.",
+      "Optimized SEO, core web vitals, and accessibility (WCAG AA compliance) across client deliverables.",
+    ],
+    skills: ["JavaScript", "React", "CSS3 / Sass", "Tailwind CSS", "Responsive Design"],
   },
 ];
 
