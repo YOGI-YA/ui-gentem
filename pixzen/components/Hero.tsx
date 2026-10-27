@@ -38,20 +38,13 @@ export default function Hero() {
   }, [text, deleting, phraseIndex]);
 
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden border-b border-border pt-20">
-      <div className="absolute inset-0">
-        <video
-          className="h-full w-full object-cover opacity-[0.85] mix-blend-luminosity"
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/textures/hero-poster.jpg"
-        >
-          <source src="/hero_bg_animation_hand.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px]" />
-        <div className="halftone absolute inset-0" />
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden border-b border-border pt-24 pb-16">
+      {/* Background ambient lighting and grid overlay */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[750px] rounded-full bg-gradient-to-b from-white/10 via-emerald-500/5 to-transparent blur-[140px]" />
+        <div className="absolute top-1/3 -left-20 h-72 w-72 rounded-full bg-foreground/5 blur-[100px]" />
+        <div className="absolute bottom-20 -right-20 h-80 w-80 rounded-full bg-emerald-500/5 blur-[120px]" />
+        <div className="halftone absolute inset-0 opacity-40" />
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-[1200px] flex-col items-center px-6 text-center">
@@ -59,9 +52,12 @@ export default function Hero() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-4 py-1.5 backdrop-blur-md"
+          className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-border bg-background/80 px-4 py-1.5 backdrop-blur-md shadow-sm"
         >
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
           <span className="text-xs tracking-[0.25em] text-foreground/80 font-medium uppercase">
             Yogender Verma — Full-Stack & AI
           </span>
@@ -71,14 +67,14 @@ export default function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center leading-[0.95] font-medium tracking-tight"
+          className="flex flex-col items-center leading-[1.05] font-medium tracking-tight max-w-4xl"
         >
-          <span className="text-[6.5vw] sm:text-[4.5vw] lg:text-[3.2vw] text-muted">
+          <span className="text-[5.5vw] sm:text-[4vw] lg:text-[2.6vw] text-muted font-normal">
             {heroPrefix}
           </span>
-          <span className="whitespace-nowrap text-[11vw] sm:text-[8vw] lg:text-[5.5vw] mt-1">
+          <span className="min-h-[1.3em] inline-block text-[8vw] sm:text-[6vw] lg:text-[4.5vw] mt-2 font-medium text-foreground">
             {text}
-            <span className="type-cursor inline-block w-[2px] translate-y-[-0.08em] bg-foreground align-middle h-[0.8em] ml-2" />
+            <span className="type-cursor inline-block w-[2px] translate-y-[-0.08em] bg-foreground align-middle h-[0.8em] ml-1.5" />
           </span>
         </motion.h1>
 
@@ -95,11 +91,11 @@ export default function Hero() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55 }}
-          className="mt-9 flex flex-wrap items-center justify-center gap-4"
+          className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
           <a
             href="#work"
-            className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-xs tracking-[0.15em] text-background font-medium transition-transform hover:scale-105"
+            className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-xs tracking-[0.15em] text-background font-semibold transition-transform hover:scale-105"
           >
             EXPLORE WORK
             <ArrowUpRight
@@ -111,14 +107,14 @@ export default function Hero() {
             href={personalInfo.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-6 py-3 text-xs tracking-[0.15em] text-foreground backdrop-blur-sm transition-colors hover:bg-foreground hover:text-background"
+            className="group inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-6 py-3 text-xs tracking-[0.15em] text-foreground backdrop-blur-sm transition-colors hover:bg-foreground hover:text-background font-medium"
           >
             <Github size={14} />
             GITHUB
           </a>
           <a
             href="#contact"
-            className="group inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-6 py-3 text-xs tracking-[0.15em] text-foreground backdrop-blur-sm transition-colors hover:border-foreground"
+            className="group inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-6 py-3 text-xs tracking-[0.15em] text-foreground backdrop-blur-sm transition-colors hover:border-foreground font-medium"
           >
             CONTACT
           </a>
@@ -126,9 +122,9 @@ export default function Hero() {
       </div>
 
       <motion.div
-        animate={{ y: [0, 10, 0] }}
+        animate={{ y: [0, 8, 0] }}
         transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-foreground/60"
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-foreground/50"
       >
         <ChevronDown size={22} />
       </motion.div>
