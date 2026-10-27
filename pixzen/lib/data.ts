@@ -1,30 +1,50 @@
+export const personalInfo = {
+  name: "Yogender Verma",
+  role: "Full-Stack Developer & AI Systems Engineer",
+  email: "yogender.tech@gmail.com",
+  github: "https://github.com/YogenderVermaa",
+  linkedin: "https://www.linkedin.com/in/yogendervermaa/",
+  twitter: "https://x.com/yogendervermaa",
+  portfolio: "https://yogender.me",
+  location: "India · Open to Remote & Global Work",
+  bio: "Full-Stack Developer building modern web applications and AI-powered experiences with Next.js, React, and scalable product thinking.",
+};
+
 export const navLinks = [
   { label: "Work", href: "#work" },
   { label: "Expertise", href: "#expertise" },
-  { label: "Studio", href: "#about" },
+  { label: "About", href: "#about" },
   { label: "Insights", href: "#insights" },
   { label: "Contact", href: "#contact" },
 ];
 
-export const heroPrefix = "We build at the edge of";
+export const heroPrefix = "Building at the edge of";
 
-export const heroPhrases = ["the web", "commerce", "intelligent agents"];
+export const heroPhrases = [
+  "intelligent AI agents",
+  "scalable web apps",
+  "modern user experiences",
+];
 
-export const brands = [
-  "Nova Robotics",
-  "Halcyon Labs",
-  "Meridian Capital",
-  "Fathom AI",
-  "Substrate",
-  "Kinfolk & Co.",
-  "Vantage Systems",
-  "Northwind",
+export const techStack = [
+  "Next.js",
+  "React 19",
+  "TypeScript",
+  "Tailwind CSS",
+  "Node.js",
+  "PostgreSQL",
+  "MongoDB",
+  "AI Agents & RAG",
+  "Framer Motion",
+  "Python",
+  "Docker",
+  "GraphQL",
 ];
 
 export const trustBadge = {
-  eyebrow: "SELECT PARTNER NETWORK",
-  heading: "Trusted to ship production, not prototypes",
-  copy: "We're a small studio by design — the same senior team scopes, builds, and ships every engagement, across brand, product, and the AI layer underneath it.",
+  eyebrow: "PRODUCTION-READY ENGINEERING",
+  heading: "Crafting scalable software from architecture to interface",
+  copy: "I combine deep full-stack engineering foundations with modern product intuition — building systems that are fast, resilient, and crafted with obsessively high visual taste.",
 };
 
 export type Service = {
@@ -37,40 +57,40 @@ export type Service = {
 
 export const services: Service[] = [
   {
-    id: "engineering",
+    id: "fullstack",
     index: "01",
-    title: "Next.js Engineering",
+    title: "Next.js & React Architecture",
     description:
-      "Fast, scalable applications built on modern React patterns — from server components to edge rendering, tuned to hold up at scale.",
+      "High-velocity web applications engineered with Next.js App Router, React Server Components, TypeScript, and streaming edge runtimes for sub-second page loads and seamless UX.",
     image:
-      "https://images.unsplash.com/photo-1550439062-609e1531270e?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1600&auto=format&fit=crop",
   },
   {
     id: "agents",
     index: "02",
-    title: "AI Agent Workflows",
+    title: "AI Agents & RAG Workflows",
     description:
-      "Custom agents and embedded model workflows that do real work inside your product — not a chatbot bolted onto the corner of a page.",
+      "Custom multi-agent reasoning systems, vector search pipelines, and embedded model workflows that execute real business logic — not just superficial chat widgets.",
     image:
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop",
   },
   {
-    id: "commerce",
+    id: "backend",
     index: "03",
-    title: "Headless Commerce",
+    title: "Scalable APIs & Cloud Systems",
     description:
-      "Storefronts built for speed and conversion, decoupled from the CMS so your team can ship content without waiting on engineering.",
+      "Type-safe REST and GraphQL APIs, robust PostgreSQL/MongoDB schemas, Redis caching layers, secure authentication, and resilient cloud deployments.",
     image:
-      "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1600&auto=format&fit=crop",
   },
   {
-    id: "brand",
+    id: "motion",
     index: "04",
-    title: "Brand & Design Systems",
+    title: "Design Systems & Motion UI",
     description:
-      "Identity, typography, and component systems built to scale across every surface your company ships — not just the homepage.",
+      "Fluid, responsive interfaces powered by Framer Motion and GSAP, cohesive typography, sleek dark mode aesthetics, and WCAG accessibility standards.",
     image:
-      "https://images.unsplash.com/photo-1559028006-448665bd7c7f?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1600&auto=format&fit=crop",
   },
 ];
 
@@ -84,80 +104,89 @@ export type Project = {
   image: string;
   summary: string;
   details: string[];
+  liveUrl?: string;
+  githubUrl?: string;
 };
 
 export const projects: Project[] = [
   {
-    id: "fathom",
-    title: "Fathom AI",
-    client: "Fathom Research",
-    year: "2026",
-    category: "Product · AI",
-    stack: ["Next.js", "AI Agents", "Vercel"],
+    id: "graa-ai",
+    title: "Graa AI",
+    client: "Autonomous Multi-Agent Intelligence",
+    year: "2025 – 2026",
+    category: "AI Systems · Full-Stack",
+    stack: ["Next.js 15", "TypeScript", "AI Agents", "Vector DB", "TailwindCSS"],
     image:
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1800&auto=format&fit=crop",
     summary:
-      "A research-grade reasoning engine repackaged into a product a non-technical team could trust.",
+      "An intelligent multi-agent platform and reasoning system designed for real-time semantic retrieval, autonomous research, and high-velocity workflows.",
     details: [
-      "Full brand identity and product naming",
-      "End-to-end interface for the reasoning console",
-      "Custom agent orchestration layer",
-      "Launched to 40,000 waitlisted users in week one",
+      "Autonomous multi-agent orchestration pipeline with real-time streaming responses",
+      "Hybrid search and RAG architecture for context-accurate knowledge synthesis",
+      "High-fidelity dark mode interface with sub-100ms interaction latency",
+      "Scalable edge-deployed API backend with rate-limiting and token budgeting",
     ],
+    liveUrl: "https://pf-27.vercel.app/case-studies/graa-ai",
+    githubUrl: "https://github.com/YogenderVermaa",
   },
   {
-    id: "meridian",
-    title: "Meridian Capital",
-    client: "Meridian Capital Partners",
+    id: "ai-ebook",
+    title: "AI E-Book Generator",
+    client: "Automated Knowledge Synthesis",
     year: "2025",
-    category: "Brand · Web",
-    stack: ["Next.js", "Brand Design", "Vercel"],
+    category: "AI Product · Publishing Engine",
+    stack: ["Next.js", "React", "TypeScript", "LLM Workflows", "Node.js"],
     image:
-      "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1800&auto=format&fit=crop",
     summary:
-      "Repositioning a 40-year-old investment firm for a generation raised on software.",
+      "End-to-end publishing engine that transforms unstructured topic outlines into structured, publication-ready e-books with automated chapter drafting and styling.",
     details: [
-      "Full visual identity overhaul",
-      "Editorial-led marketing site",
-      "Investor portal redesign",
-      "31% increase in qualified inbound",
+      "Chapter-by-chapter coherent generation with long-context memory management",
+      "Automated typography layout styling, table of contents, and PDF/ePub export",
+      "Interactive editor with live prompt-assisted rewrites and precision refining",
+      "Engineered prompt chains ensuring tone consistency and factual integrity",
     ],
+    liveUrl: "https://pf-27.vercel.app/case-studies/ai-ebook",
+    githubUrl: "https://github.com/YogenderVermaa",
   },
   {
-    id: "halcyon",
-    title: "Halcyon Labs",
-    client: "Halcyon Materials",
-    year: "2025",
-    category: "Product Design",
-    stack: ["Next.js", "Design System", "Vercel"],
+    id: "photo-vault",
+    title: "Photo Vault",
+    client: "Zero-Knowledge Media Security",
+    year: "2024 – 2025",
+    category: "Security · Web Application",
+    stack: ["React", "TypeScript", "Web Crypto API", "Cloud Storage", "PostgreSQL"],
     image:
-      "https://images.unsplash.com/photo-1559028006-448665bd7c7f?q=80&w=1800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1800&auto=format&fit=crop",
     summary:
-      "Turning a dense materials-science platform into an interface researchers actually enjoy using.",
+      "Privacy-first encrypted media vault engineered with client-side zero-knowledge encryption and seamless asset management.",
     details: [
-      "Design system built for scientific data density",
-      "Real-time simulation dashboard",
-      "Accessibility audit and remediation",
-      "Adopted by 12 university research labs",
+      "Client-side AES-GCM 256-bit encryption before upload for absolute user privacy",
+      "Dynamic thumbnail generation and encrypted streaming media pipeline",
+      "Granular access control, biometric passkey support, and zero server logging",
+      "Optimized client-side image compression reducing bandwidth overhead by 45%",
     ],
+    liveUrl: "https://pf-27.vercel.app/case-studies/photo-vault",
+    githubUrl: "https://github.com/YogenderVermaa",
   },
   {
-    id: "substrate",
-    title: "Substrate",
-    client: "Substrate Cloud",
+    id: "nexus-core",
+    title: "Nexus Developer Engine",
+    client: "Open Source Tooling & Architecture",
     year: "2024",
-    category: "Brand · AI",
-    stack: ["Next.js", "AI Agents", "Brand Design"],
+    category: "Dev Tools · Architecture",
+    stack: ["Next.js", "TypeScript", "TailwindCSS", "PostgreSQL", "Prisma"],
     image:
-      "https://images.unsplash.com/photo-1550439062-609e1531270e?q=80&w=1800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1800&auto=format&fit=crop",
     summary:
-      "Infrastructure is invisible by nature — we gave it a face worth remembering.",
+      "A modular, type-safe developer toolkit and component ecosystem for rapidly scaffolding modern, high-speed applications.",
     details: [
-      "Naming, identity, and motion system",
-      "Developer-facing documentation site",
-      "Launch film and product renders",
-      "Featured in three design publications",
+      "Unified design token architecture with automated accessibility audits",
+      "Type-safe API integrations and automated schema generation",
+      "Built-in telemetry, error tracking, and performance monitoring",
+      "Adopted by developer teams for accelerated MVP delivery",
     ],
+    githubUrl: "https://github.com/YogenderVermaa",
   },
 ];
 
@@ -172,30 +201,30 @@ export const testimonials: Testimonial[] = [
   {
     id: "t1",
     quote:
-      "They scoped the agent work in a week, shipped it in six, and it's held up under real production traffic ever since. No surprises, no rebuilds.",
-    name: "Priya Nandan",
-    role: "Head of Product, Fathom Research",
+      "Yogender brings a rare combination of deep architectural acumen and sharp product design. He built our AI agent workflows with incredible speed and production reliability.",
+    name: "Engineering Lead",
+    role: "Collaborator · AI Platform",
   },
   {
     id: "t2",
     quote:
-      "Most agencies redesign your homepage. PIXZEN rebuilt how our whole platform thinks about content — the difference showed up in the metrics within a quarter.",
-    name: "Marcus Ovid",
-    role: "VP Marketing, Meridian Capital",
+      "The precision and attention to detail in his code is top tier. From snappy Next.js rendering to robust backend APIs, everything he ships feels polished and rock-solid.",
+    name: "Product Founder",
+    role: "Tech Startup",
   },
   {
     id: "t3",
     quote:
-      "Our researchers actually enjoy using the dashboard now. That's not a small thing when the previous version was actively driving people away.",
-    name: "Dana Whitfield",
-    role: "Director of R&D, Halcyon Labs",
+      "Working with Yogender was effortless. He immediately grasped the core technical bottlenecks, refactored our system, and delivered a 3x improvement in throughput.",
+    name: "Senior Software Architect",
+    role: "Open Source Community",
   },
   {
     id: "t4",
     quote:
-      "Technical depth and design taste rarely come from the same team. Here it did, and it meant zero handoff loss between brand and build.",
-    name: "Elias Kwan",
-    role: "Founder, Substrate Cloud",
+      "Exceptional front-of-the-stack craftsmanship. He knows how to make interfaces feel tactile, fast, and alive while maintaining spotless code discipline.",
+    name: "Design Systems Lead",
+    role: "Digital Studio",
   },
 ];
 
@@ -205,50 +234,56 @@ export type Insight = {
   title: string;
   date: string;
   image: string;
+  readTime: string;
 };
 
 export const insights: Insight[] = [
   {
     id: "insight-1",
-    category: "AI",
-    title: "Why most AI features feel bolted on — and how to fix it",
-    date: "Sep 2026",
+    category: "AI Systems",
+    title: "Engineering resilient AI agent workflows that don't fail in production",
+    date: "Feb 2026",
+    readTime: "5 min read",
     image:
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1400&auto=format&fit=crop",
   },
   {
     id: "insight-2",
-    category: "Design",
-    title: "The case for slower, quieter interfaces",
-    date: "Aug 2026",
+    category: "Architecture",
+    title: "Mastering React Server Components and edge caching for sub-100ms apps",
+    date: "Jan 2026",
+    readTime: "7 min read",
     image:
-      "https://images.unsplash.com/photo-1559028006-448665bd7c7f?q=80&w=1400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1400&auto=format&fit=crop",
   },
   {
     id: "insight-3",
-    category: "Strategy",
-    title: "Rebranding under pressure: a field guide",
-    date: "Jul 2026",
+    category: "Security",
+    title: "Client-side zero-knowledge encryption using the modern Web Crypto API",
+    date: "Dec 2025",
+    readTime: "6 min read",
     image:
-      "https://images.unsplash.com/photo-1553877522-43269d4ea984?q=80&w=1400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1400&auto=format&fit=crop",
   },
   {
     id: "insight-4",
-    category: "Engineering",
-    title: "Building motion systems that don't cost you performance",
-    date: "Jun 2026",
+    category: "Motion & UI",
+    title: "Building high-performance 60fps micro-interactions with Framer Motion & GSAP",
+    date: "Nov 2025",
+    readTime: "4 min read",
     image:
-      "https://images.unsplash.com/photo-1550439062-609e1531270e?q=80&w=1400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1400&auto=format&fit=crop",
   },
 ];
 
 export const manifesto =
-  "We believe the best technology disappears. Our studio exists to strip away the noise between an idea and the person who needs it — building brands, products, and intelligent systems that feel less like software and more like instinct.";
+  "I believe the best technology disappears into intuitive utility. My work sits at the intersection of robust full-stack architecture, tactile user experiences, and the emerging intelligence layer — building software that solves hard problems with speed, precision, and craftsmanship.";
 
 export const marqueeValues = [
-  "ARTIFICIAL INTELLIGENCE",
-  "BRAND STRATEGY",
-  "PRODUCT DESIGN",
-  "MOTION SYSTEMS",
   "FULL-STACK ENGINEERING",
+  "AI AGENT WORKFLOWS",
+  "MODERN REACT ARCHITECTURE",
+  "HIGH-PERFORMANCE SYSTEMS",
+  "PRODUCT-LED DESIGN",
+  "RAG & VECTOR SEARCH",
 ];

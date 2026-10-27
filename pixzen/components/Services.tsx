@@ -13,8 +13,8 @@ export default function Services() {
   return (
     <section id="expertise" className="border-b border-border py-28 md:py-36">
       <div className="mx-auto max-w-[1440px] px-6 md:px-10">
-        <p className="mb-14 text-xs tracking-[0.3em] text-muted">
-          OUR EXPERTISE
+        <p className="mb-14 text-xs tracking-[0.3em] text-muted uppercase">
+          CORE EXPERTISE & TECHNICAL SKILLS
         </p>
 
         <div className="grid grid-cols-1 gap-12 md:grid-cols-12 md:gap-8">

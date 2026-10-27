@@ -5,8 +5,8 @@ export default function Testimonials() {
   return (
     <section className="border-b border-border py-28 md:py-36">
       <div className="mx-auto max-w-[1440px] px-6 md:px-10">
-        <p className="mb-14 text-xs tracking-[0.3em] text-muted">
-          WHY CLIENTS TRUST US
+        <p className="mb-14 text-xs tracking-[0.3em] text-muted uppercase">
+          ENDORSEMENTS & COLLABORATIONS
         </p>
 
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2">
