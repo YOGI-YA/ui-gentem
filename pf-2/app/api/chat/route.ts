@@ -29,10 +29,24 @@ Guidelines:
 4. Keep responses punchy and formatted in clean markdown.
 `;
 
+const CANDIDATE_MODELS = [
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
+  "llama-3.3-70b-versatile",
+  "llama-3.1-8b-instant",
+];
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+    }
 
+    const { messages } = body;
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Invalid messages array" }, { status: 400 });
     }
@@ -40,65 +54,72 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GROQ_API_KEY;
 
     if (apiKey) {
-      // Connect to Groq Cloud API
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...messages.slice(-8), // Keep context window clean
-          ],
-          temperature: 0.7,
-          max_tokens: 600,
-        }),
-      });
+      // Try candidate models in order until one succeeds
+      for (const model of CANDIDATE_MODELS) {
+        try {
+          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey.trim()}`,
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                ...messages.slice(-8),
+              ],
+              temperature: 0.7,
+              max_tokens: 500,
+            }),
+          });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Groq API error:", errorText);
-        return NextResponse.json({
-          reply: `Groq connection issue (${response.status}). Here is what I can tell you about Yogender: He is a ${personalInfo.role} skilled in ${techStack.slice(0, 5).join(", ")}.`,
-          isFallback: true,
-        });
+          if (response.ok) {
+            const data = await response.json();
+            const reply = data.choices?.[0]?.message?.content;
+            if (reply) {
+              return NextResponse.json({
+                reply,
+                model: model.replace("openai/", "").replace("qwen/", ""),
+                isGroq: true,
+              });
+            }
+          } else {
+            console.warn(`Groq model ${model} failed with status: ${response.status}`);
+          }
+        } catch (callErr) {
+          console.warn(`Error trying Groq model ${model}:`, callErr);
+        }
       }
-
-      const data = await response.json();
-      const reply = data.choices?.[0]?.message?.content || "I'm here to help you explore Yogender's work!";
-      return NextResponse.json({ reply, model: "llama-3.3-70b-versatile", isGroq: true });
     }
 
-    // Intelligent fallback when GROQ_API_KEY is not yet supplied
+    // Context-aware fallback if Groq call failed or key was unset
     const userMessage = messages[messages.length - 1]?.content?.toLowerCase() || "";
 
     let fallbackReply = "";
     if (userMessage.includes("contact") || userMessage.includes("hire") || userMessage.includes("email")) {
       fallbackReply = `You can reach Yogender directly at **[${personalInfo.email}](mailto:${personalInfo.email})**. You can also connect with him on [LinkedIn](${personalInfo.linkedin}) or view his repositories on [GitHub](${personalInfo.github}).`;
     } else if (userMessage.includes("stack") || userMessage.includes("tech") || userMessage.includes("skill")) {
-      fallbackReply = `Yogender specializes in **Full-Stack & AI Systems**. His core technologies include:\n\n* **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS, Framer Motion, GSAP\n* **Backend:** Node.js, Python, PostgreSQL, REST & GraphQL\n* **AI & Systems:** Groq API, AI Agents, RAG Pipelines, Docker, LangChain\n\n*(Note: Add your \`GROQ_API_KEY\` in \`.env.local\` to activate real-time Llama 3.3 streaming!)*`;
+      fallbackReply = `Yogender specializes in **Full-Stack & AI Systems**. His core technologies include:\n\n* **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS, Framer Motion, GSAP\n* **Backend:** Node.js, Python, PostgreSQL, REST & GraphQL\n* **AI & Systems:** Groq API, AI Agents, RAG Pipelines, Docker, LangChain`;
     } else if (userMessage.includes("project") || userMessage.includes("work")) {
-      fallbackReply = `Here are some of Yogender's key projects:\n\n1. **Call Screener AI**: Real-time acoustic & voice AI assistant for screening inquiries with instant transcription.\n2. **Graa AI**: Educational AI intelligence engine analyzing syllabus roadmaps.\n3. **Pixzen & UI-Gentem**: High-taste design systems and interactive Next.js web experiences.\n\n*(Connect your \`GROQ_API_KEY\` to dive into deep technical architecture questions!)*`;
+      fallbackReply = `Here are some of Yogender's key projects:\n\n1. **Call Screener AI**: Real-time acoustic & voice AI assistant for screening inquiries with instant transcription.\n2. **Graa AI**: Educational AI intelligence engine analyzing syllabus roadmaps.\n3. **Pixzen & UI-Gentem**: High-taste design systems and interactive Next.js web experiences.`;
     } else if (userMessage.includes("philosophy")) {
       fallbackReply = `"${manifesto}"\n\nYogender designs systems where engineering precision meets fluid micro-interactions and tactile visual taste.`;
     } else {
-      fallbackReply = `Hello! I'm **YogiBot**, Yogender's interactive AI companion. \n\nI can answer questions about Yogender's experience in **${personalInfo.role}**, his projects, technical stack, or how to collaborate.\n\n*(Tip: Once you provide your Groq API key, I will be fully powered by Llama 3.3 70B!)*`;
+      fallbackReply = `Hello! I'm **YogiBot**, Yogender's AI companion. \n\nI can answer questions about Yogender's work in **${personalInfo.role}**, his projects, technical stack, or how to collaborate with him.`;
     }
 
     return NextResponse.json({
       reply: fallbackReply,
+      model: "Knowledge Base",
       isFallback: true,
-      hint: "Add GROQ_API_KEY to .env.local for live Groq Llama 3.3 completions.",
     });
   } catch (error: unknown) {
     console.error("Chat API error:", error);
-    return NextResponse.json(
-      { error: "Failed to process chat message", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    // Never crash with unhandled 500 error, return graceful fallback!
+    return NextResponse.json({
+      reply: `Hello! I'm **YogiBot**. I had a slight connection hiccup, but Yogender is reachable at **[${personalInfo.email}](mailto:${personalInfo.email})** or on [GitHub](${personalInfo.github})!`,
+      isFallback: true,
+    });
   }
 }
-
