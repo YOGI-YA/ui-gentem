@@ -11,6 +11,7 @@ export const personalInfo = {
 };
 
 export const navLinks = [
+  { label: "Philosophy", href: "#philosophy" },
   { label: "Work", href: "#work" },
   { label: "Expertise", href: "#expertise" },
   { label: "Experience", href: "#experience" },

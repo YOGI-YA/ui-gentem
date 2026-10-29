@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import PhilosophySection from "@/components/PhilosophySection";
 import TrustedBrands from "@/components/TrustedBrands";
 import Services from "@/components/Services";
 import FeaturedWork from "@/components/FeaturedWork";
@@ -22,6 +23,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero onReplayIntro={() => setShowIntro(true)} />
+        <PhilosophySection />
         <TrustedBrands />
         <Services />
         <FeaturedWork />
