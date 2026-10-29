@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
-import Noise from "@/components/Noise";
 
 export const metadata: Metadata = {
   title: "Yogender Verma — Full-Stack Developer & AI Systems Engineer",
@@ -57,7 +56,6 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Noise />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>

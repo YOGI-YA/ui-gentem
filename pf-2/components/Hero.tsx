@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, ArrowUpRight, Github } from "lucide-react";
 import { heroPhrases, heroPrefix, personalInfo } from "@/lib/data";
-import ParticleField from "@/components/ParticleField";
 
 const TYPING_SPEED = 65;
 const DELETING_SPEED = 35;
@@ -40,15 +39,11 @@ export default function Hero() {
 
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden border-b border-border pt-24 pb-16">
-      {/* Subtle particle background */}
-      <ParticleField />
-
       {/* Ambient background lighting */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[550px] w-[800px] rounded-full bg-gradient-to-b from-white/10 via-slate-400/5 to-transparent blur-[140px]" />
         <div className="absolute top-1/3 -left-20 h-72 w-72 rounded-full bg-foreground/5 blur-[100px]" />
         <div className="absolute bottom-20 -right-20 h-80 w-80 rounded-full bg-red-500/5 blur-[120px]" />
-        <div className="halftone absolute inset-0 opacity-40" />
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-[1100px] flex-col items-center px-6 text-center">

@@ -88,8 +88,8 @@ function playWebSound() {
 
 export default function CyberSpider() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hitBoxRef = useRef<HTMLDivElement>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [hitBoxPos, setHitBoxPos] = useState({ x: 200, y: 200, angle: 0 });
   const [isScurryingState, setIsScurryingState] = useState(false);
 
   // Interaction dispatcher ref
@@ -519,34 +519,35 @@ export default function CyberSpider() {
       spider.x = Math.max(30, Math.min(window.innerWidth - 30, spider.x));
       spider.y = Math.max(30, Math.min(window.innerHeight - 30, spider.y));
 
-      // Update interactive hitbox tracking
-      if (frameCount % 4 === 0) {
-        setHitBoxPos({ x: spider.x, y: spider.y, angle: spider.angle });
+      // Fast GPU-accelerated hitbox tracking without React re-renders
+      if (hitBoxRef.current) {
+        hitBoxRef.current.style.transform = `translate3d(${spider.x}px, ${spider.y}px, 0)`;
       }
 
       // --- 3. MULTI-LAYER 3D DROP SHADOWS (Drawing depth from reference photo) ---
       const shadowOffsetX = 14;
       const shadowOffsetY = 18;
 
-      // 3a. Deep soft body drop shadow
+      // 3a. Deep soft body drop shadow using fast radial gradient
       ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(
+      const bodyShadowGrad = ctx.createRadialGradient(
         spider.x + shadowOffsetX,
         spider.y + shadowOffsetY + 4,
-        22,
-        16,
-        spider.angle,
-        0,
-        Math.PI * 2
+        3,
+        spider.x + shadowOffsetX,
+        spider.y + shadowOffsetY + 4,
+        26
       );
-      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-      ctx.filter = "blur(10px)";
+      bodyShadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.45)");
+      bodyShadowGrad.addColorStop(0.5, "rgba(0, 0, 0, 0.2)");
+      bodyShadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = bodyShadowGrad;
+      ctx.beginPath();
+      ctx.arc(spider.x + shadowOffsetX, spider.y + shadowOffsetY + 4, 26, 0, Math.PI * 2);
       ctx.fill();
-      ctx.filter = "none";
       ctx.restore();
 
-      // 3b. Leg shadows (elevated knee cast shadow)
+      // 3b. Leg shadows (elevated knee cast shadow with smooth alpha)
       legs.forEach((leg) => {
         const bodyAttachAngle = spider.angle + leg.baseAngle;
         const attachX = spider.x + Math.cos(bodyAttachAngle) * 11;
@@ -564,15 +565,13 @@ export default function CyberSpider() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(attachX + shadowOffsetX * 0.5, attachY + shadowOffsetY * 0.5);
-        ctx.lineTo(x1 + shadowOffsetX * 0.85, y1 + shadowOffsetY * 0.85);
-        ctx.lineTo(leg.footX + 2, leg.footY + 3);
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.32)";
-        ctx.lineWidth = 2.8;
+        ctx.moveTo(attachX + shadowOffsetX * 0.45, attachY + shadowOffsetY * 0.45);
+        ctx.lineTo(x1 + shadowOffsetX * 0.75, y1 + shadowOffsetY * 0.75);
+        ctx.lineTo(leg.footX + 1.5, leg.footY + 2.5);
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.26)";
+        ctx.lineWidth = 3.2;
         ctx.lineCap = "round";
-        ctx.filter = "blur(5px)";
         ctx.stroke();
-        ctx.filter = "none";
         ctx.restore();
 
         // 3c. Crisp needle-contact pin shadow at claw tip
@@ -834,6 +833,7 @@ export default function CyberSpider() {
 
       {/* Interactive Hitbox tracking the Spider's body for Click & Double Tap */}
       <div
+        ref={hitBoxRef}
         onPointerDown={handlePointerDown}
         onDoubleClick={(e) => {
           e.stopPropagation();
@@ -843,10 +843,9 @@ export default function CyberSpider() {
           }
           interactionRef.current.onDoubleTap();
         }}
-        className="fixed z-[76] w-24 h-24 -ml-12 -mt-12 rounded-full cursor-pointer pointer-events-auto group touch-none select-none"
+        className="fixed z-[76] w-24 h-24 -ml-12 -mt-12 rounded-full cursor-pointer pointer-events-auto group touch-none select-none top-0 left-0"
         style={{
-          left: `${hitBoxPos.x}px`,
-          top: `${hitBoxPos.y}px`,
+          willChange: "transform",
         }}
         title="Black Widow Spider • Click to throw web & run, Double tap to talk"
       >
