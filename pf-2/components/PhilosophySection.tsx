@@ -243,3 +243,4 @@ export default function PhilosophySection() {
     </section>
   );
 }
+

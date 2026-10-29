@@ -9,12 +9,11 @@ import Services from "@/components/Services";
 import FeaturedWork from "@/components/FeaturedWork";
 import Experience from "@/components/Experience";
 import About from "@/components/About";
-import BreakoutGame from "@/components/BreakoutGame";
 import Insights from "@/components/Insights";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import IntroAnimation from "@/components/IntroAnimation";
-import WalkingRobot from "@/components/WalkingRobot";
+import CyberSpider from "@/components/CyberSpider";
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
@@ -24,18 +23,17 @@ export default function Home() {
       {showIntro && <IntroAnimation onComplete={() => setShowIntro(false)} />}
       <Navbar />
       <main>
-        <Hero onReplayIntro={() => setShowIntro(true)} />
+        <Hero />
         <PhilosophySection />
         <TrustedBrands />
         <Services />
         <FeaturedWork />
         <Experience />
         <About />
-        <BreakoutGame />
         <Insights />
         <Contact />
       </main>
-      <WalkingRobot />
+      <CyberSpider />
       <Footer />
     </>
   );

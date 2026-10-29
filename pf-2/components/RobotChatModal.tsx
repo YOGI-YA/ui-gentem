@@ -227,3 +227,4 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
     </AnimatePresence>
   );
 }
+
