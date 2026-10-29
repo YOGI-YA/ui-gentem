@@ -8,6 +8,7 @@
   --color-foreground: #f5f3ef;
   --color-muted: #8e8e8e;
   --color-border: #ffffff1f;
+  --color-ember: #ef4444;
 
   --breakpoint-xs: 420px;
 }
@@ -97,6 +98,165 @@
 
 .type-cursor {
   animation: blink-caret 0.9s step-end infinite;
+}
+
+/* ---------- Metallic Chrome Gradients & 3D Typography ---------- */
+.metallic-chrome {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f8fafc 18%,
+    #cbd5e1 42%,
+    #475569 50%,
+    #94a3b8 58%,
+    #e2e8f0 82%,
+    #ffffff 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 24px rgba(255, 255, 255, 0.22));
+}
+
+.metallic-chrome-subtle {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #cbd5e1 45%,
+    #64748b 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Scroll Expand Philosophy Section Styles ---------- */
+.scroll-expand {
+  width: 100%;
+  position: relative;
+}
+
+.scroll-expand__track {
+  width: 100%;
+  min-height: 200vh;
+  position: relative;
+}
+
+.scroll-expand__stage {
+  z-index: 20;
+  background: #050505;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+}
+
+.scroll-expand__frame {
+  will-change: clip-path;
+  background: #0d0d0f;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(239, 68, 68, 0.15);
+}
+
+.scroll-expand__media {
+  object-fit: cover;
+  will-change: transform, filter;
+  transform-origin: 50%;
+  user-select: none;
+  -webkit-user-drag: none;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.scroll-expand__scrim {
+  pointer-events: none;
+  opacity: 0.25;
+  will-change: opacity;
+  background: radial-gradient(circle, rgba(5, 5, 5, 0.45) 0%, rgba(5, 5, 5, 0.85) 70%, rgba(5, 5, 5, 0.98) 100%);
+  position: absolute;
+  inset: 0;
+}
+
+.scroll-expand__title {
+  text-align: center;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.9), 0 2px 25px rgba(239, 68, 68, 0.4);
+  pointer-events: none;
+  will-change: opacity, transform;
+  z-index: 5;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  display: flex;
+  position: absolute;
+  inset: 0;
+}
+
+.scroll-expand__hint {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  will-change: opacity, transform;
+  z-index: 5;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  display: flex;
+  position: absolute;
+  bottom: 2.25rem;
+  left: 0;
+  right: 0;
+}
+
+@keyframes sePulse {
+  0%, 100% {
+    box-shadow: 0 0 4px #ef4444;
+    transform: scale(0.9);
+  }
+  50% {
+    box-shadow: 0 0 14px #ef4444;
+    transform: scale(1.2);
+  }
+}
+
+.scroll-expand__hint-dot {
+  background: #ef4444;
+  border-radius: 9999px;
+  width: 6px;
+  height: 6px;
+  animation: 2s cubic-bezier(0.4, 0, 0.6, 1) infinite sePulse;
+  display: inline-block;
+}
+
+.scroll-expand__overlay {
+  text-align: center;
+  opacity: 0;
+  will-change: opacity, transform;
+  z-index: 10;
+  pointer-events: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  display: flex;
+  position: absolute;
+  inset: 0;
 }
 
 /* ---------- Utility: hide scrollbar for horizontal rails ---------- */
