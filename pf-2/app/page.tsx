@@ -13,6 +13,7 @@ import Insights from "@/components/Insights";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import IntroAnimation from "@/components/IntroAnimation";
+import WalkingRobot from "@/components/WalkingRobot";
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
@@ -32,6 +33,7 @@ export default function Home() {
         <Insights />
         <Contact />
       </main>
+      <WalkingRobot />
       <Footer />
     </>
   );
