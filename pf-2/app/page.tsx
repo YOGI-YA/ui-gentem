@@ -9,6 +9,7 @@ import Services from "@/components/Services";
 import FeaturedWork from "@/components/FeaturedWork";
 import Experience from "@/components/Experience";
 import About from "@/components/About";
+import BreakoutGame from "@/components/BreakoutGame";
 import Insights from "@/components/Insights";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
@@ -30,6 +31,7 @@ export default function Home() {
         <FeaturedWork />
         <Experience />
         <About />
+        <BreakoutGame />
         <Insights />
         <Contact />
       </main>
