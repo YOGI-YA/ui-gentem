@@ -9,7 +9,11 @@ const TYPING_SPEED = 65;
 const DELETING_SPEED = 35;
 const HOLD_MS = 1400;
 
-export default function Hero() {
+interface HeroProps {
+  onSayHello: () => void;
+}
+
+export default function Hero({ onSayHello }: HeroProps) {
   const [text, setText] = useState("");
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
@@ -123,12 +127,13 @@ export default function Hero() {
             GITHUB
           </a>
 
-          <a
-            href="#contact"
+          <button
+            type="button"
+            onClick={onSayHello}
             className="group inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-6 py-3.5 text-xs tracking-[0.15em] text-foreground backdrop-blur-sm transition-colors hover:border-foreground font-medium"
           >
             SAY HELLO
-          </a>
+          </button>
         </motion.div>
       </div>
 

@@ -5,10 +5,14 @@ import { gsap } from "gsap";
 import { ArrowUpRight, Mail, Github, Linkedin, Twitter } from "lucide-react";
 import { personalInfo } from "@/lib/data";
 
-function MagneticButton() {
-  const buttonRef = useRef<HTMLAnchorElement>(null);
+interface ContactProps {
+  onSayHello: () => void;
+}
 
-  function handleMouseMove(e: React.MouseEvent<HTMLAnchorElement>) {
+function MagneticButton({ onClick }: { onClick: () => void }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLButtonElement>) {
     const el = buttonRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -34,9 +38,10 @@ function MagneticButton() {
   }
 
   return (
-    <a
+    <button
       ref={buttonRef}
-      href={`mailto:${personalInfo.email}`}
+      type="button"
+      onClick={onClick}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className="group inline-flex items-center gap-3 rounded-full bg-foreground px-8 py-4 text-background transition-transform"
@@ -46,11 +51,11 @@ function MagneticButton() {
         size={18}
         className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
       />
-    </a>
+    </button>
   );
 }
 
-export default function Contact() {
+export default function Contact({ onSayHello }: ContactProps) {
   return (
     <section
       id="contact"
@@ -73,7 +78,7 @@ export default function Contact() {
         </p>
 
         <div className="mt-12">
-          <MagneticButton />
+          <MagneticButton onClick={onSayHello} />
         </div>
 
         <div className="mt-16 flex flex-wrap items-center justify-center gap-6 border-t border-border pt-10 text-sm">

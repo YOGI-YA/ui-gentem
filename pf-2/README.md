@@ -36,6 +36,7 @@ components/
   About.tsx           GSAP ScrollTrigger word-reveal statement + stats + marquee
   Insights.tsx        Technical articles with cursor-following image reveal
   Contact.tsx         Magnetic interactive button, contact methods, social links
+  ContactMessageModal.tsx  Verified contact form dialog backed by /api/message
   Footer.tsx          Footer navigation & live links
   SmoothScroll.tsx    Lenis smooth-scroll provider
   Noise.tsx           SVG film-grain texture
