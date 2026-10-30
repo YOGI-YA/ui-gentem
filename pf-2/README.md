@@ -1,4 +1,4 @@
-# Yogender Verma — Portfolio
+
 
 Modern, high-performance portfolio for **Yogender Verma**, Full-Stack Developer & AI Systems Engineer. Built with Next.js 15 (App Router), Tailwind CSS v4, GSAP, Framer Motion, and Lenis smooth scrolling.
 
