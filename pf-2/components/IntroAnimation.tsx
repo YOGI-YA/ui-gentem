@@ -1,313 +1,493 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  useAnimation,
+  useReducedMotion,
+} from "framer-motion";
+import { personalInfo } from "@/lib/data";
+
+/* -------------------------------------------------------------------------- */
+/*  Tuning                                                                    */
+/* -------------------------------------------------------------------------- */
+
+const ROLE = "Full-stack developer";
+const ACCENT = "#E8B04A"; // same amber used in Hero and About
+
+// Show the intro once per browser session. Set to false to play on every visit.
+const ONCE_PER_SESSION = true;
+const STORAGE_KEY = "intro-seen";
+
+// Milliseconds from page load. The wake-ups speed up on purpose: a build-up.
+const T = {
+  impact: 340, // the dot hits the floor for the first time
+  i: 800, //     the I stands up
+  g: 1100,
+  o: 1350,
+  y: 1600,
+  hy: 1850, //   the hyphen fires
+  y2: 2050,
+  a: 2250,
+  all: 2650, //  YOGI-YA is complete: glitch, sweep, name decodes
+  zoom: 3750, // camera flies through the word
+  exit: 4250, // curtain lifts
+};
+
+// Glyph metrics, in em of the letter size. Adjust if your font sits differently.
+const DOT_TOP = "-0.1em"; //    where the dot rests above the I
+const DOT_LAND = "0.72em"; //   how far it falls to reach the floor
+const FLOOR = "0.135em"; //     baseline offset from the bottom of the line box
+const HYPHEN_RISE = "0.27em"; // height of the hyphen above the baseline
+
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+const SLEEP = {
+  rotate: -90,
+  opacity: 0.3,
+  filter: "drop-shadow(0 0 0em rgba(255,255,255,0))",
+};
+const AWAKE = {
+  rotate: 0,
+  opacity: 1,
+  filter: "drop-shadow(0 0 0.25em rgba(255,255,255,0.7))",
+};
+
+// The word wakes from the dotted I outwards, then the hyphen, then "YA".
+const WORD = [
+  { char: "Y", wakeAt: 4 },
+  { char: "O", wakeAt: 3 },
+  { char: "G", wakeAt: 2 },
+  { char: "I", wakeAt: 1, dot: true },
+  { char: "-", wakeAt: 5, hyphen: true },
+  { char: "Y", wakeAt: 6, bouncy: true },
+  { char: "A", wakeAt: 7, bouncy: true },
+];
+
+const GLITCH_REST =
+  "drop-shadow(0em 0 0 rgba(255,0,90,0)) drop-shadow(0em 0 0 rgba(0,220,255,0))";
+const GLITCH_SPLIT =
+  "drop-shadow(-0.04em 0 0 rgba(255,0,90,0.85)) drop-shadow(0.04em 0 0 rgba(0,220,255,0.85))";
+
+/* -------------------------------------------------------------------------- */
+/*  Small pieces                                                              */
+/* -------------------------------------------------------------------------- */
+
+// Sparks and a floor ring, fired when a letter hits the ground.
+const SPARKS = Array.from({ length: 9 }, (_, i) => {
+  const a = ((-165 + i * (150 / 8)) * Math.PI) / 180; // an upward fan
+  const d = 0.55 + (((i * 37) % 10) / 10) * 0.6;
+  return { x: Math.cos(a) * d, y: Math.sin(a) * d, hot: i % 2 === 0 };
+});
+
+function Slam({ big = false }: { big?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute left-1/2 z-10 h-0 w-0"
+      style={{ bottom: FLOOR }}
+    >
+      <motion.span
+        className="absolute block rounded-[50%] border"
+        style={{
+          left: "-0.2em",
+          top: "-0.04em",
+          width: "0.4em",
+          height: "0.08em",
+          borderColor: ACCENT,
+        }}
+        initial={{ scale: 0.2, opacity: 0.9 }}
+        animate={{ scale: big ? 9 : 6, opacity: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      />
+      {SPARKS.map((s, i) => (
+        <motion.span
+          key={i}
+          className="absolute block rounded-full"
+          style={{
+            width: "0.035em",
+            height: "0.035em",
+            background: s.hot ? ACCENT : "#fff",
+          }}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+          animate={{
+            x: `${s.x * (big ? 1.4 : 1)}em`,
+            y: `${s.y * (big ? 1.4 : 1)}em`,
+            opacity: 0,
+            scale: 0.2,
+          }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+        />
+      ))}
+    </span>
+  );
+}
+
+// Text that scrambles and then locks in, left to right.
+const SCRAMBLE = "!<>-_/[]{}=+*^?#%&";
+function Decode({ text, run, instant }: { text: string; run: boolean; instant: boolean }) {
+  const [out, setOut] = useState(() => (instant ? text : text.replace(/\S/g, " ")));
+
+  useEffect(() => {
+    if (instant) {
+      setOut(text);
+      return;
+    }
+    if (!run) return;
+    let step = 0;
+    const steps = 18;
+    const id = setInterval(() => {
+      step++;
+      const locked = Math.floor((step / steps) * text.length);
+      setOut(
+        text
+          .split("")
+          .map((c, i) =>
+            c === " " || i < locked
+              ? c
+              : SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)]
+          )
+          .join("")
+      );
+      if (step >= steps) {
+        clearInterval(id);
+        setOut(text);
+      }
+    }, 38);
+    return () => clearInterval(id);
+  }, [run, text, instant]);
+
+  return <>{out}</>;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Intro                                                                     */
+/* -------------------------------------------------------------------------- */
 
 interface IntroAnimationProps {
   onComplete?: () => void;
 }
 
-type AnimationPhase =
-  | "sleeping"   // All letters lying down flat (180°), dot drops & bounces
-  | "i_wakes"    // Stem of I snaps straight up (180° to 90°), dot settles on top
-  | "g_wakes"    // Letter G wakes up (180° to 90°)
-  | "o_wakes"    // Letter O wakes up (180° to 90°)
-  | "y_wakes"    // Letter Y wakes up (180° to 90°)
-  | "all_awake"  // Entire YOGI complete and awake with chrome gleam & subtitle
-  | "complete";  // Smooth transition to hero
-
 export default function IntroAnimation({ onComplete }: IntroAnimationProps) {
-  const [phase, setPhase] = useState<AnimationPhase>("sleeping");
+  const reduce = !!useReducedMotion();
+  const shake = useAnimation();
   const [visible, setVisible] = useState(true);
+  const [skipped, setSkipped] = useState(false);
+  // 0 asleep · 1 I · 2 G · 3 O · 4 Y · 5 hyphen · 6 Y · 7 A · 8 all awake
+  const [wake, setWake] = useState(0);
+  const [impact, setImpact] = useState(false);
+  const [zoom, setZoom] = useState(false);
+  const finished = useRef(false);
 
-  useEffect(() => {
-    // 0ms -> 950ms: Dot drops & bounces while all letters sleep flat
-    const t1 = setTimeout(() => {
-      setPhase("i_wakes");
-    }, 950);
-
-    // 950ms -> 1500ms: I gets straight up (180° to 90°)
-    const t2 = setTimeout(() => {
-      setPhase("g_wakes");
-    }, 1500);
-
-    // 1500ms -> 1950ms: G wakes up
-    const t3 = setTimeout(() => {
-      setPhase("o_wakes");
-    }, 1950);
-
-    // 1950ms -> 2400ms: O wakes up
-    const t4 = setTimeout(() => {
-      setPhase("y_wakes");
-    }, 2400);
-
-    // 2400ms -> 2850ms: Y wakes up, all awake
-    const t5 = setTimeout(() => {
-      setPhase("all_awake");
-    }, 2850);
-
-    // 2850ms -> 3750ms: Hold awake proudly, then complete
-    const t6 = setTimeout(() => {
-      setPhase("complete");
-      setTimeout(() => {
-        setVisible(false);
-        onComplete?.();
-      }, 550);
-    }, 3750);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setPhase("complete");
-        setTimeout(() => {
-          setVisible(false);
-          onComplete?.();
-        }, 150);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
-      clearTimeout(t5);
-      clearTimeout(t6);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+  const finish = useCallback(() => {
+    if (finished.current) return;
+    finished.current = true;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, "1");
+    } catch {}
+    onComplete?.();
   }, [onComplete]);
 
-  const skip = () => {
-    setPhase("complete");
-    setTimeout(() => {
-      setVisible(false);
-      onComplete?.();
-    }, 150);
-  };
+  // Returning visitors in the same session go straight to the site.
+  useEffect(() => {
+    if (!ONCE_PER_SESSION) return;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY)) {
+        setSkipped(true);
+        setVisible(false);
+        finish();
+      }
+    } catch {}
+  }, [finish]);
 
-  if (!visible) return null;
+  // Timeline
+  useEffect(() => {
+    if (skipped) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
 
-  const isIAwake = phase !== "sleeping";
-  const isGAwake =
-    phase === "g_wakes" ||
-    phase === "o_wakes" ||
-    phase === "y_wakes" ||
-    phase === "all_awake" ||
-    phase === "complete";
-  const isOAwake =
-    phase === "o_wakes" ||
-    phase === "y_wakes" ||
-    phase === "all_awake" ||
-    phase === "complete";
-  const isYAwake =
-    phase === "y_wakes" || phase === "all_awake" || phase === "complete";
-  const isAllAwake = phase === "all_awake" || phase === "complete";
+    if (reduce) {
+      setWake(8);
+      at(900, () => setVisible(false));
+      return () => timers.forEach(clearTimeout);
+    }
+
+    // The whole word jolts when something lands.
+    const kick = (amp: number) =>
+      shake.start({
+        x: [0, -8 * amp, 7 * amp, -4 * amp, 2 * amp, 0],
+        y: [0, 5 * amp, -4 * amp, 2 * amp, 0, 0],
+        transition: { duration: 0.36 },
+      });
+
+    at(T.impact, () => {
+      setImpact(true);
+      kick(1.4);
+    });
+    (
+      [
+        [T.i, 1, 0.5],
+        [T.g, 2, 0.5],
+        [T.o, 3, 0.6],
+        [T.y, 4, 0.7],
+        [T.hy, 5, 0.9],
+        [T.y2, 6, 1],
+        [T.a, 7, 1.3],
+        [T.all, 8, 1.8],
+      ] as const
+    ).forEach(([ms, w, amp]) =>
+      at(ms, () => {
+        setWake(w);
+        kick(amp);
+      })
+    );
+    at(T.zoom, () => setZoom(true));
+    at(T.exit, () => setVisible(false));
+
+    return () => timers.forEach(clearTimeout);
+  }, [reduce, skipped, shake]);
+
+  // Keep the page from scrolling behind the intro.
+  useEffect(() => {
+    if (!visible) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [visible]);
+
+  const skip = useCallback(() => setVisible(false), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && skip();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [skip]);
+
+  if (skipped) return null;
+
+  const springFor = (bouncy?: boolean) =>
+    reduce
+      ? { duration: 0 }
+      : {
+          type: "spring" as const,
+          stiffness: bouncy ? 300 : 240,
+          damping: bouncy ? 9 : 15,
+          mass: 0.8,
+        };
+
+  const complete = wake >= 8;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={finish}>
       {visible && (
         <motion.div
-          key="intro-overlay"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: "blur(12px)" }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#070708] select-none overflow-hidden"
+          key="intro"
+          role="status"
+          aria-label={`YOGI-YA, ${personalInfo.name}, ${ROLE}`}
+          initial={{ clipPath: "inset(0% 0% 0% 0%)" }}
+          exit={{
+            clipPath: "inset(0% 0% 100% 0%)",
+            transition: { duration: reduce ? 0.3 : 0.85, ease: [0.76, 0, 0.24, 1] },
+          }}
+          className="fixed inset-0 z-[100] flex select-none flex-col items-center justify-center overflow-hidden bg-[#070708]"
         >
-          {/* Ambient Lighting */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="h-[450px] w-[650px] rounded-full bg-gradient-to-b from-white/10 via-slate-400/5 to-transparent blur-[130px] opacity-50" />
-          </div>
-
-          {/* Minimal Skip Pill */}
-          <button
-            onClick={skip}
-            className="absolute top-6 right-6 z-20 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[11px] font-mono tracking-widest text-white/40 hover:text-white hover:border-white/20 transition-all uppercase cursor-pointer"
+          {/* The room lights up as the letters wake */}
+          <motion.div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            animate={{ opacity: 0.1 + wake * 0.1 }}
+            transition={{ duration: 0.5 }}
           >
-            Skip [ESC]
+            <div className="h-[460px] w-[720px] rounded-full bg-gradient-to-b from-white/15 via-slate-400/5 to-transparent blur-[130px]" />
+          </motion.div>
+
+          <button
+            type="button"
+            onClick={skip}
+            className="absolute right-5 top-5 z-20 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs text-white/60 transition-colors hover:border-white/30 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Skip intro <span className="ml-1.5 text-white/30">Esc</span>
           </button>
 
-          {/* Animation Center Stage */}
-          <div className="relative flex flex-col items-center justify-center min-h-[220px] px-6">
-            {/* Illuminated Baseline Floor */}
-            <div className="relative flex items-end justify-center gap-4 sm:gap-6 md:gap-8 pb-4">
-              <div className="absolute bottom-4 left-[-40px] right-[-40px] h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-
-              {/* Letter Y */}
-              <div className="relative flex items-end justify-center">
-                <motion.span
-                  initial={{ rotate: -88, y: 18, opacity: 0.4 }}
-                  animate={
-                    isYAwake
-                      ? {
-                          rotate: 0,
-                          y: 0,
-                          opacity: 1,
-                          filter: "drop-shadow(0 0 25px rgba(255,255,255,0.75))",
-                        }
-                      : {
-                          rotate: -88,
-                          y: 18,
-                          opacity: 0.4,
-                          filter: "drop-shadow(0 0 0px rgba(255,255,255,0))",
-                        }
-                  }
-                  transition={{
-                    type: "spring",
-                    stiffness: 240,
-                    damping: 15,
-                    mass: 0.8,
+          {/* Fly-through: the camera dives into the finished word */}
+          <motion.div
+            className="relative px-4"
+            animate={
+              zoom
+                ? { scale: 5, opacity: 0, filter: "blur(14px)" }
+                : { scale: 1, opacity: 1, filter: "blur(0px)" }
+            }
+            transition={{ duration: 0.5, ease: [0.6, 0, 0.9, 0.4] }}
+          >
+            {/* Screen shake */}
+            <motion.div animate={shake}>
+              {/* RGB glitch when the word completes */}
+              <motion.div
+                animate={
+                  complete && !reduce
+                    ? {
+                        filter: [GLITCH_REST, GLITCH_SPLIT, GLITCH_REST, GLITCH_SPLIT, GLITCH_REST],
+                        x: [0, -6, 5, -3, 0],
+                      }
+                    : { filter: GLITCH_REST, x: 0 }
+                }
+                transition={{ duration: 0.45 }}
+              >
+                {/* The word. Everything inside is sized in em, so it scales as one. */}
+                <div
+                  aria-hidden="true"
+                  className="relative flex items-end justify-center gap-[0.05em] text-[15vw] sm:text-8xl md:text-9xl"
+                  style={{
+                    WebkitBoxReflect:
+                      "below 0.02em linear-gradient(transparent 62%, rgba(255,255,255,0.14))",
                   }}
-                  style={{ transformOrigin: "20% 95%" }}
-                  className="metallic-chrome text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none"
                 >
-                  Y
-                </motion.span>
-              </div>
+                  {/* Floor line */}
+                  <div
+                    className="pointer-events-none absolute -inset-x-[0.3em] h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                    style={{ bottom: FLOOR }}
+                  />
 
-              {/* Letter O */}
-              <div className="relative flex items-end justify-center">
-                <motion.span
-                  initial={{ rotate: -88, y: 18, opacity: 0.4 }}
-                  animate={
-                    isOAwake
-                      ? {
-                          rotate: 0,
-                          y: 0,
-                          opacity: 1,
-                          filter: "drop-shadow(0 0 25px rgba(255,255,255,0.75))",
-                        }
-                      : {
-                          rotate: -88,
-                          y: 18,
-                          opacity: 0.4,
-                          filter: "drop-shadow(0 0 0px rgba(255,255,255,0))",
-                        }
-                  }
-                  transition={{
-                    type: "spring",
-                    stiffness: 240,
-                    damping: 15,
-                    mass: 0.8,
-                  }}
-                  style={{ transformOrigin: "20% 95%" }}
-                  className="metallic-chrome text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none"
-                >
-                  O
-                </motion.span>
-              </div>
+                  {WORD.map(({ char, wakeAt, dot, hyphen, bouncy }, idx) => {
+                    const awake = wake >= wakeAt;
 
-              {/* Letter G */}
-              <div className="relative flex items-end justify-center">
-                <motion.span
-                  initial={{ rotate: -88, y: 18, opacity: 0.4 }}
-                  animate={
-                    isGAwake
-                      ? {
-                          rotate: 0,
-                          y: 0,
-                          opacity: 1,
-                          filter: "drop-shadow(0 0 25px rgba(255,255,255,0.75))",
-                        }
-                      : {
-                          rotate: -88,
-                          y: 18,
-                          opacity: 0.4,
-                          filter: "drop-shadow(0 0 0px rgba(255,255,255,0))",
-                        }
-                  }
-                  transition={{
-                    type: "spring",
-                    stiffness: 240,
-                    damping: 15,
-                    mass: 0.8,
-                  }}
-                  style={{ transformOrigin: "20% 95%" }}
-                  className="metallic-chrome text-6xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none"
-                >
-                  G
-                </motion.span>
-              </div>
+                    /* The hyphen is a bar that fires out of the I */
+                    if (hyphen) {
+                      return (
+                        <span
+                          key={idx}
+                          className="relative mx-[0.03em] self-end"
+                          style={{
+                            width: "0.36em",
+                            height: "0.11em",
+                            marginBottom: `calc(${FLOOR} + ${HYPHEN_RISE})`,
+                          }}
+                        >
+                          <motion.span
+                            className="block h-full w-full rounded-full"
+                            style={{
+                              background: ACCENT,
+                              boxShadow: `0 0 0.3em ${ACCENT}`,
+                              transformOrigin: "0% 50%",
+                            }}
+                            initial={{ scaleX: 0, opacity: 0 }}
+                            animate={awake ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+                            transition={springFor(true)}
+                          />
+                        </span>
+                      );
+                    }
 
-              {/* Letter I: Animated Dot & Stem */}
-              <div className="relative flex flex-col items-center justify-end h-16 sm:h-24 md:h-28">
-                {/* Dot of I */}
-                <motion.div
-                  initial={{ y: -160, opacity: 0 }}
-                  animate={
-                    phase === "sleeping"
-                      ? {
-                          y: [-160, 68, 16, 68, 45, 68],
-                          scaleX: [0.85, 1.45, 0.95, 1.25, 0.98, 1],
-                          scaleY: [1.15, 0.55, 1.05, 0.75, 1.02, 1],
-                          opacity: 1,
-                        }
-                      : {
-                          y: 0,
-                          scaleX: 1,
-                          scaleY: 1,
-                          opacity: 1,
-                          transition: {
-                            type: "spring",
-                            stiffness: 280,
-                            damping: 14,
-                          },
-                        }
-                  }
-                  transition={
-                    phase === "sleeping"
-                      ? {
-                          duration: 0.95,
-                          times: [0, 0.42, 0.65, 0.82, 0.92, 1],
-                          ease: "easeOut",
-                        }
-                      : undefined
-                  }
-                  className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 rounded-full bg-white shadow-[0_0_22px_rgba(255,255,255,0.95)] order-first mb-2"
-                />
+                    return (
+                      <span key={idx} className="relative">
+                        <motion.span
+                          initial={SLEEP}
+                          animate={awake ? AWAKE : SLEEP}
+                          transition={springFor(bouncy)}
+                          style={{ transformOrigin: "0% 88%" }}
+                          className="metallic-chrome block font-black leading-none tracking-tight"
+                        >
+                          {char}
+                        </motion.span>
 
-                {/* Stem of I (starts sleeping flat at -88°, springs upright to 0°) */}
-                <motion.div
-                  initial={{ rotate: -88, y: 18, opacity: 0.4 }}
-                  animate={
-                    isIAwake
-                      ? {
-                          rotate: 0,
-                          y: 0,
-                          opacity: 1,
-                          boxShadow: "0 0 25px rgba(255,255,255,0.75)",
-                        }
-                      : {
-                          rotate: -88,
-                          y: 18,
-                          opacity: 0.4,
-                          boxShadow: "0 0 0px rgba(255,255,255,0)",
-                        }
-                  }
-                  transition={{
-                    type: "spring",
-                    stiffness: 270,
-                    damping: 14,
-                    mass: 0.8,
-                  }}
-                  style={{ transformOrigin: "20% 95%" }}
-                  className="w-4 sm:w-6 md:w-7 h-12 sm:h-18 md:h-22 rounded-sm bg-gradient-to-b from-white via-slate-200 to-slate-400"
-                />
-              </div>
-            </div>
+                        {awake && !reduce && <Slam big={bouncy} />}
 
-            {/* Subtitle Badge revealed when all awake */}
-            {/* <motion.div
+                        {/* The dot that makes the I a person */}
+                        {dot && (
+                          <>
+                            {impact && !reduce && wake === 0 && <Slam big />}
+                            <span
+                              className="absolute left-1/2 -translate-x-1/2"
+                              style={{ top: DOT_TOP }}
+                            >
+                              <motion.span
+                                className="block rounded-full"
+                                style={{
+                                  width: "0.17em",
+                                  height: "0.17em",
+                                  background: ACCENT,
+                                  boxShadow: `0 0 0.3em ${ACCENT}`,
+                                  transformOrigin: "50% 100%",
+                                }}
+                                initial={{ y: "-3.5em", opacity: 0 }}
+                                animate={
+                                  reduce
+                                    ? { y: 0, opacity: 1 }
+                                    : wake === 0
+                                    ? {
+                                        y: ["-3.5em", DOT_LAND, "0.25em", DOT_LAND, "0.5em", DOT_LAND],
+                                        scaleX: [0.85, 1.45, 0.95, 1.25, 0.98, 1],
+                                        scaleY: [1.15, 0.55, 1.05, 0.75, 1.02, 1],
+                                        opacity: 1,
+                                      }
+                                    : {
+                                        y: 0,
+                                        scaleX: 1,
+                                        scaleY: 1,
+                                        opacity: 1,
+                                        transition: { type: "spring", stiffness: 280, damping: 14 },
+                                      }
+                                }
+                                transition={
+                                  wake === 0 && !reduce
+                                    ? {
+                                        duration: T.i / 1000,
+                                        times: [0, 0.42, 0.65, 0.82, 0.92, 1],
+                                        ease: "easeOut",
+                                      }
+                                    : undefined
+                                }
+                              />
+                            </span>
+                          </>
+                        )}
+                      </span>
+                    );
+                  })}
+
+                  {/* One light sweep across the finished word */}
+                  {!reduce && (
+                    <div className="pointer-events-none absolute -inset-x-[0.1em] inset-y-0 overflow-hidden mix-blend-overlay">
+                      <motion.div
+                        className="absolute inset-y-[-20%] w-[16%] -skew-x-[18deg] bg-gradient-to-r from-transparent via-white to-transparent"
+                        initial={{ x: "-120%", opacity: 0 }}
+                        animate={complete ? { x: "800%", opacity: 1 } : { x: "-120%", opacity: 0 }}
+                        transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Who is behind the word: the name decodes, the role fades in */}
+            <motion.div
+              className="mt-8 flex flex-col items-center gap-1 text-center"
               initial={{ opacity: 0, y: 8 }}
-              animate={isAllAwake ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md"
+              animate={complete ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.4, ease: EASE }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-white" />
-              <span className="text-[11px] font-mono tracking-[0.25em] text-zinc-300 uppercase">
-                Yogender Verma &bull; Full-Stack Developer
-              </span>
-            </motion.div> */}
-          </div>
+              <p className="font-mono text-base tracking-wider text-zinc-100 sm:text-lg">
+                <Decode text={personalInfo.name} run={complete} instant={reduce} />
+              </p>
+              <p className="text-sm text-zinc-500">{ROLE}</p>
+            </motion.div>
+          </motion.div>
+
+          {/* Shows how short the wait is */}
+          {!reduce && (
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-x-0 bottom-0 h-[2px] origin-left"
+              style={{ background: ACCENT }}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: T.exit / 1000, ease: "linear" }}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>
