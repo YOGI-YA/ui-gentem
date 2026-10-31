@@ -1,246 +1,330 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { Sparkles, Compass, Cpu, Layers } from "lucide-react";
 import { personalInfo } from "@/lib/data";
 
-const clamp = (val: number, min: number, max: number) =>
-  val < min ? min : val > max ? max : val;
+/* -------------------------------------------------------------------------- */
+/*  Content                                                                   */
+/* -------------------------------------------------------------------------- */
 
-const smoothstep = (min: number, max: number, val: number) => {
-  const n = clamp((val - min) / (max - min || 1e-6), 0, 1);
-  return n * n * (3 - 2 * n);
+const ROLE = "Full-stack developer";
+const STATUS = "Open to work & opportunities";
+
+const PRINCIPLES = [
+  {
+    title: "Clean architecture",
+    body: "Clear boundaries between UI, API and data, so features are easy to add and easy to delete.",
+  },
+  {
+    title: "Performance",
+    body: "Fast first load, small bundles and queries that hold up as the data grows.",
+  },
+  {
+    title: "Accessible UI",
+    body: "Semantic markup, keyboard support and readable contrast from the first commit.",
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/*  Scroll maths                                                              */
+/* -------------------------------------------------------------------------- */
+
+const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
+const smooth = (a: number, b: number, v: number) => {
+  const t = clamp((v - a) / (b - a || 1e-6), 0, 1);
+  return t * t * (3 - 2 * t);
 };
 
+// Extra scroll distance (in viewport heights) the section stays pinned for.
+const PIN_DISTANCE = 2;
+// Your name starts huge in the middle and travels into its final slot
+// between these two scroll points.
+const TRAVEL_FROM = 0.06;
+const TRAVEL_TO = 0.56;
+// Final size of the name once it has landed, in px.
+const LANDED_SIZE = 18;
+
 export default function PhilosophySection() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const hintRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLParagraphElement>(null);
+  const slotRef = useRef<HTMLParagraphElement>(null);
+  const roleRef = useRef<HTMLParagraphElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-
-  const startWidth = 50;
-  const startHeight = 60;
-  const startRadius = 26;
-  const endRadius = 0;
-  const mediaZoom = 1.35;
-  const overlayScrim = 0.75;
-  const scrollDistance = 1.2;
-
-  const updateProgress = useCallback(
-    (progress: number) => {
-      const frame = frameRef.current;
-      const media = mediaRef.current;
-      if (!frame || !media) return;
-
-      const isMobile = window.innerWidth < 640;
-      const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
-
-      const w = isMobile ? 86 : isTablet ? 70 : startWidth;
-      const h = isMobile ? 58 : isTablet ? 60 : startHeight;
-      const r = isMobile ? 18 : isTablet ? 22 : startRadius;
-
-      // Primary expansion progress mapped to 0..0.85 of scroll track
-      const p = clamp(progress / 0.85, 0, 1);
-      const f = smoothstep(0, 1, p);
-
-      const marginX = Math.max(0, (100 - (w + (100 - w) * f)) / 2);
-      const marginY = Math.max(0, (100 - (h + (100 - h) * f)) / 2);
-      const radius = r + (endRadius - r) * f;
-
-      frame.style.clipPath = `inset(${marginY.toFixed(3)}% ${marginX.toFixed(3)}% ${marginY.toFixed(3)}% ${marginX.toFixed(3)}% round ${radius.toFixed(1)}px)`;
-
-      // Background media scale and blur
-      const scale = mediaZoom + (1 - mediaZoom) * f;
-      const blur = (8 * (1 - f)).toFixed(1);
-      media.style.transform = `scale(${scale.toFixed(4)})`;
-      media.style.filter = `blur(${blur}px)`;
-
-      // Title fade and subtle elevation
-      if (titleRef.current) {
-        const titleProgress = smoothstep(0.08, 0.45, p);
-        titleRef.current.style.opacity = `${(1 - titleProgress).toFixed(3)}`;
-        titleRef.current.style.transform = `translate3d(0, ${(-28 * titleProgress).toFixed(1)}px, 0) scale(${(1 + 0.04 * titleProgress).toFixed(3)})`;
-      }
-
-      // Scroll hint fade and descent
-      if (hintRef.current) {
-        const hintProgress = smoothstep(0, 0.22, p);
-        hintRef.current.style.opacity = `${(1 - hintProgress).toFixed(3)}`;
-        hintRef.current.style.transform = `translate3d(0, ${(10 * hintProgress).toFixed(1)}px, 0)`;
-      }
-
-      // Dark radial scrim darkening
-      if (scrimRef.current) {
-        const scrimOpacity = 0.25 + (overlayScrim - 0.25) * f;
-        scrimRef.current.style.opacity = `${scrimOpacity.toFixed(3)}`;
-      }
-
-      // Philosophy content overlay reveal
-      if (overlayRef.current) {
-        const overlayProgress = smoothstep(0.42, 0.85, progress);
-        overlayRef.current.style.opacity = `${overlayProgress.toFixed(3)}`;
-        overlayRef.current.style.transform = `translate3d(0, ${(24 * (1 - overlayProgress)).toFixed(1)}px, 0)`;
-        overlayRef.current.style.pointerEvents = overlayProgress > 0.75 ? "auto" : "none";
-      }
-    },
-    [startWidth, startHeight, startRadius, endRadius, mediaZoom, overlayScrim]
-  );
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
     const track = trackRef.current;
     const stage = stageRef.current;
-    if (!container || !track || !stage) return;
+    const frame = frameRef.current;
+    const media = mediaRef.current;
+    const scrim = scrimRef.current;
+    const overlay = overlayRef.current;
+    const name = nameRef.current;
+    const slot = slotRef.current;
+    if (!track || !stage || !frame || !media || !scrim || !overlay || !name || !slot)
+      return;
 
-    let rafId = 0;
-    let winHeight = 0;
-    let scrollRange = 0;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
 
-    const measure = () => {
-      winHeight = window.innerHeight;
-      if (winHeight <= 0) return;
-      const totalTrackHeight = winHeight * (1 + Math.max(0.6, scrollDistance));
-      track.style.height = `${totalTrackHeight}px`;
-      stage.style.height = `${winHeight}px`;
-      scrollRange = totalTrackHeight - winHeight;
-    };
+    const render = () => {
+      // ---- reads (kept together so we don't thrash layout) ----
+      const range = track.offsetHeight - window.innerHeight;
+      const p = reduceMotion
+        ? 1
+        : range > 0
+        ? clamp(-track.getBoundingClientRect().top / range, 0, 1)
+        : 0;
+      const vw = window.innerWidth;
+      const stageBox = stage.getBoundingClientRect();
+      const slotBox = slot.getBoundingClientRect();
+      const nameW = name.offsetWidth;
+      const nameH = name.offsetHeight;
+      const startFont = parseFloat(getComputedStyle(name).fontSize) || 96;
 
-    const handleScroll = () => {
-      if (scrollRange <= 0) {
-        updateProgress(0);
-        return;
+      // ---- writes ----
+      // Frame: a window that opens to full-bleed.
+      const [insetX, insetY, radius] =
+        vw < 640 ? [7, 22, 20] : vw < 1024 ? [14, 20, 28] : [27, 18, 32];
+      const open = smooth(0, 0.55, p);
+      frame.style.clipPath = `inset(${(insetY * (1 - open)).toFixed(2)}% ${(
+        insetX *
+        (1 - open)
+      ).toFixed(2)}% round ${(radius * (1 - open)).toFixed(1)}px)`;
+      media.style.transform = `scale(${(1.22 - 0.22 * open).toFixed(4)})`;
+      scrim.style.opacity = (0.3 + 0.62 * open).toFixed(3);
+
+      // The name: one element that shrinks from a giant centred title
+      // into the small signature in the identity block. Always scaled
+      // down from a large font size, so the text stays crisp.
+      const u = smooth(TRAVEL_FROM, TRAVEL_TO, p);
+      const x0 = (stageBox.width - nameW) / 2;
+      const y0 = (stageBox.height - nameH) / 2 - 8;
+      const x1 = slotBox.left - stageBox.left;
+      const y1 = slotBox.top - stageBox.top;
+      const s1 = LANDED_SIZE / startFont;
+      name.style.transform = `translate3d(${(x0 + (x1 - x0) * u).toFixed(
+        1
+      )}px, ${(y0 + (y1 - y0) * u).toFixed(1)}px, 0) scale(${(
+        1 +
+        (s1 - 1) * u
+      ).toFixed(4)})`;
+
+      if (roleRef.current) {
+        roleRef.current.style.opacity = (1 - smooth(0.04, 0.26, p)).toFixed(3);
       }
-      const top = track.getBoundingClientRect().top;
-      const progress = clamp(-top / scrollRange, 0, 1);
-      updateProgress(progress);
+      if (hintRef.current) {
+        hintRef.current.style.opacity = (1 - smooth(0, 0.14, p)).toFixed(3);
+      }
+
+      // Content fades up in order, each at its own data-start point.
+      overlay.querySelectorAll<HTMLElement>("[data-start]").forEach((el) => {
+        const start = parseFloat(el.dataset.start || "0");
+        const t = smooth(start, start + 0.12, p);
+        el.style.opacity = t.toFixed(3);
+        el.style.transform = `translate3d(0, ${(14 * (1 - t)).toFixed(1)}px, 0)`;
+      });
+      overlay.setAttribute("aria-hidden", p < 0.45 ? "true" : "false");
+
+      if (barRef.current) {
+        barRef.current.style.transform = `scaleX(${p.toFixed(3)})`;
+      }
     };
 
-    const onScroll = () => {
-      if (!rafId) {
-        rafId = requestAnimationFrame(() => {
-          rafId = 0;
-          handleScroll();
+    let raf = 0;
+    const schedule = () => {
+      if (!raf)
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          render();
         });
-      }
     };
 
-    const onResize = () => {
-      measure();
-      handleScroll();
-    };
-
-    measure();
-    handleScroll();
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize);
-
-    const ro = new ResizeObserver(onResize);
-    ro.observe(container);
-
+    render();
+    // Fonts can change the name's width after first paint.
+    document.fonts?.ready.then(schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
     };
-  }, [updateProgress, scrollDistance]);
+  }, []);
 
   return (
-    <section id="philosophy" ref={containerRef} className="scroll-expand relative w-full">
-      <div ref={trackRef} className="scroll-expand__track">
-        <div ref={stageRef} className="scroll-expand__stage">
-          {/* Framed card that dynamically expands on scroll */}
-          <div ref={frameRef} className="scroll-expand__frame">
-            {/* Background cinematic media */}
-            <div ref={mediaRef} className="scroll-expand__media absolute inset-0">
+    <section id="about" className="relative w-full bg-[#06080d]">
+      <div id="about-me" className="absolute -top-20" />
+      <div id="philosophy" className="absolute -top-20" />
+      <h2 className="sr-only">About me</h2>
+
+      <div
+        ref={trackRef}
+        style={{ height: `${(1 + PIN_DISTANCE) * 100}svh` }}
+        className="relative"
+      >
+        <div
+          ref={stageRef}
+          className="sticky top-0 h-svh w-full overflow-hidden"
+          style={{ ["--fs" as string]: "clamp(2.6rem, 9vw, 9rem)" }}
+        >
+          {/* The aperture: starts as a framed window, opens to full-bleed */}
+          <div
+            ref={frameRef}
+            className="absolute inset-0 will-change-[clip-path]"
+            style={{ clipPath: "inset(18% 27% round 32px)" }}
+          >
+            <div
+              ref={mediaRef}
+              className="absolute inset-0 will-change-transform"
+              style={{ transform: "scale(1.22)" }}
+            >
               <Image
-                src="/images/philosophy-bg.jpg"
-                alt="Atmospheric dark cinematic background"
+                src="/images/philosophy-bg.png"
+                alt=""
                 fill
                 priority
+                sizes="100vw"
                 className="object-cover"
               />
             </div>
+            <div
+              ref={scrimRef}
+              className="absolute inset-0"
+              style={{
+                opacity: 0.3,
+                background:
+                  "linear-gradient(100deg, rgba(6,8,13,.96) 0%, rgba(6,8,13,.82) 55%, rgba(6,8,13,.6) 100%)",
+              }}
+            />
 
-            {/* Dark Scrim */}
-            <div ref={scrimRef} className="scroll-expand__scrim" />
+            {/* Revealed content */}
+            <div
+              ref={overlayRef}
+              aria-hidden="true"
+              className="absolute inset-0 flex items-center"
+            >
+              <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 sm:px-10 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+                {/* Left: who */}
+                <div className="flex flex-col justify-center gap-5">
+                  <h3
+                    data-start="0.4"
+                    className="max-w-xl text-2xl font-semibold leading-[1.15] tracking-tight text-[#F1EEE6] sm:text-4xl lg:text-5xl"
+                    style={{ opacity: 0 }}
+                  >
+                    I build full-stack web products that stay fast as they grow.
+                  </h3>
+                  <p
+                    data-start="0.46"
+                    className="max-w-md text-sm leading-relaxed text-[#C9C6BD] sm:text-base"
+                    style={{ opacity: 0 }}
+                  >
+                    I work across the stack, and I add AI features such as
+                    retrieval and workflow automation where they earn their
+                    place.
+                  </p>
 
-            {/* Expanded Philosophy Content Overlay */}
-            <div ref={overlayRef} className="scroll-expand__overlay">
-              <div className="flex flex-col items-center justify-center gap-6 max-w-4xl mx-auto px-6 select-none">
-                {/* Ember Badge */}
-                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/60 border border-red-500/30 backdrop-blur-md shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-red-400 text-xs font-semibold tracking-[0.3em] uppercase">
-                    The Philosophy
-                  </span>
-                </div>
-
-                {/* The Philosophy Quote */}
-                <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium text-white leading-[1.35] tracking-tight text-center max-w-3xl drop-shadow-xl">
-                  &ldquo;I believe great software is born at the intersection of engineering precision and design intuition. Every pixel, every interaction, every line of code is an opportunity to create something that moves people.&rdquo;
-                </p>
-
-                {/* Three Pillars */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mt-4 max-w-3xl">
-                  <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-4 text-left hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 text-xs font-mono text-red-400 mb-1">
-                      <Cpu size={14} />
-                      <span>01. PRECISION</span>
+                  <div
+                    data-start="0.5"
+                    className="mt-2 h-px max-w-md bg-white/15"
+                    style={{ opacity: 0 }}
+                  />
+                  <div className="flex max-w-md flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                    <div>
+                      {/* Empty slot: the travelling name lands exactly here */}
+                      <p
+                        ref={slotRef}
+                        aria-hidden="true"
+                        className="select-none font-semibold tracking-tight opacity-0"
+                        style={{ fontSize: LANDED_SIZE, lineHeight: 1.2 }}
+                      >
+                        {personalInfo.name}
+                      </p>
+                      <p
+                        data-start="0.54"
+                        className="mt-0.5 text-sm text-[#8F8D86]"
+                        style={{ opacity: 0 }}
+                      >
+                        {personalInfo.location}
+                      </p>
                     </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      Type-safe, resilient backend & agentic architecture built for high throughput.
+                    <p
+                      data-start="0.58"
+                      className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-sm text-[#D8F2E4]"
+                      style={{ opacity: 0 }}
+                    >
+                      <span className="relative flex h-2 w-2" aria-hidden="true">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                      </span>
+                      {STATUS}
                     </p>
                   </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-4 text-left hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 text-xs font-mono text-slate-300 mb-1">
-                      <Layers size={14} />
-                      <span>02. INTUITION</span>
-                    </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      Fluid 60fps micro-interactions, tactile motion, and uncompromised aesthetic taste.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-4 text-left hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 text-xs font-mono text-amber-300 mb-1">
-                      <Compass size={14} />
-                      <span>03. HUMAN-CENTRIC</span>
-                    </div>
-                    <p className="text-xs text-white/70 leading-relaxed">
-                      Designing AI and software tools that empower human curiosity and execution.
-                    </p>
-                  </div>
                 </div>
 
-                <div className="mt-2 text-xs font-mono tracking-[0.25em] text-white/50 uppercase">
-                  {personalInfo.name} &bull; {personalInfo.location}
-                </div>
+                {/* Right: how I work (not a sequence, so no numbering) */}
+                <ul className="flex flex-col justify-center">
+                  {PRINCIPLES.map((item, i) => (
+                    <li
+                      key={item.title}
+                      data-start={(0.6 + i * 0.1).toFixed(2)}
+                      className="border-t border-white/15 py-4 first:border-t-0 first:pt-0 sm:py-5"
+                      style={{ opacity: 0 }}
+                    >
+                      <h4 className="text-base font-medium text-[#F1EEE6] sm:text-lg">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 max-w-sm text-sm leading-relaxed text-[#B9B6AD]">
+                        {item.body}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
 
-          {/* Initial Headline (before expansion) */}
-          <h2 ref={titleRef} className="scroll-expand__title">
-            The Philosophy
-          </h2>
+          {/* The name: giant at first, then travels into the identity block */}
+          <p
+            ref={nameRef}
+            className="pointer-events-none absolute left-0 top-0 z-10 origin-top-left whitespace-nowrap font-semibold tracking-tight text-[#F1EEE6]"
+            style={{ fontSize: "var(--fs)", lineHeight: 1.2 }}
+          >
+            {personalInfo.name}
+          </p>
+          <p
+            ref={roleRef}
+            className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 text-sm tracking-wide text-[#C9C6BD] sm:text-base"
+            style={{ top: "calc(50% + var(--fs) * 0.6 + 4px)" }}
+          >
+            {ROLE}
+          </p>
 
-          {/* Scroll Hint */}
-          <div ref={hintRef} className="scroll-expand__hint">
-            <span className="scroll-expand__hint-dot" />
-            <span>Scroll to expand</span>
+          <div
+            ref={hintRef}
+            className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-xs text-[#C9C6BD]"
+          >
+            <span>Scroll to open</span>
+            <span className="h-8 w-px bg-gradient-to-b from-[#C9C6BD] to-transparent motion-safe:animate-pulse" />
+          </div>
+
+          {/* Progress along the bottom edge */}
+          <div className="absolute inset-x-0 bottom-0 h-[2px] bg-white/10">
+            <div
+              ref={barRef}
+              className="h-full origin-left bg-[#E8B04A]"
+              style={{ transform: "scaleX(0)" }}
+            />
           </div>
         </div>
       </div>
     </section>
   );
 }
-

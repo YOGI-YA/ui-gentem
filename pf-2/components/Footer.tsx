@@ -17,7 +17,8 @@ const navColumns: FooterColumn[] = [
     links: [
       { label: "Selected Work", href: "#work" },
       { label: "Core Expertise", href: "#expertise" },
-      { label: "About & Philosophy", href: "#about" },
+      { label: "About Me", href: "#about" },
+      { label: "Manifesto", href: "#manifesto" },
       { label: "Technical Insights", href: "#insights" },
       { label: "Contact", href: "#contact" },
     ],

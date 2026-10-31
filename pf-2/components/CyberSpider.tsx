@@ -847,7 +847,7 @@ export default function CyberSpider() {
         style={{
           willChange: "transform",
         }}
-        title="Black Widow Spider • Click to throw web & run, Double tap to talk"
+        title="Black Widow Spider • Click: Web & Run, Double tap: Portfolio Console"
       >
         {/* Subtle, sleek HUD tooltip on hover */}
         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute -top-11 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/85 border border-red-500/30 text-white text-[10px] font-mono tracking-wider backdrop-blur-md pointer-events-none whitespace-nowrap shadow-xl flex items-center gap-2">
@@ -858,7 +858,7 @@ export default function CyberSpider() {
             ) : (
               <>
                 <span className="text-red-400">Click:</span> Web & Run &bull;{" "}
-                <span className="text-emerald-400">2x Tap:</span> Talk
+                <span className="text-zinc-300">2x Tap:</span> Console
               </>
             )}
           </span>

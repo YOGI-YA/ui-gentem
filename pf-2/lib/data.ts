@@ -6,16 +6,16 @@ export const personalInfo = {
   linkedin: "https://www.linkedin.com/in/yogendervermaa/",
   twitter: "https://x.com/yogendervermaa",
   portfolio: "https://yogender.me",
-  location: "India · Open to Remote & Global Work",
+  location: "Himachal, India · Open to Work & Opportunities",
   bio: "Full-Stack Developer building modern web applications and AI-powered experiences with Next.js, React, and scalable product thinking.",
 };
 
 export const navLinks = [
-  { label: "Philosophy", href: "#philosophy" },
+  { label: "About Me", href: "#about" },
   { label: "Work", href: "#work" },
   { label: "Expertise", href: "#expertise" },
   { label: "Experience", href: "#experience" },
-  { label: "About", href: "#about" },
+  { label: "Manifesto", href: "#manifesto" },
   { label: "Insights", href: "#insights" },
   { label: "Contact", href: "#contact" },
 ];
@@ -148,7 +148,7 @@ export const projects: Project[] = [
       "Scalable edge-deployed API backend with rate-limiting and token budgeting",
     ],
     liveUrl: "https://pf-27.vercel.app/case-studies/graa-ai",
-    githubUrl: "https://github.com/YogenderVermaa",
+    githubUrl: "https://github.com/yogi-ya",
   },
   {
     id: "ai-ebook",
@@ -177,7 +177,7 @@ export const projects: Project[] = [
       "Engineered prompt chains ensuring tone consistency and factual integrity",
     ],
     liveUrl: "https://pf-27.vercel.app/case-studies/ai-ebook",
-    githubUrl: "https://github.com/YogenderVermaa",
+    githubUrl: "https://github.com/yogi-ya",
   },
   {
     id: "photo-vault",
@@ -206,7 +206,7 @@ export const projects: Project[] = [
       "Optimized client-side image compression reducing bandwidth overhead by 45%",
     ],
     liveUrl: "https://pf-27.vercel.app/case-studies/photo-vault",
-    githubUrl: "https://github.com/YogenderVermaa",
+    githubUrl: "https://github.com/yogi-ya",
   },
   {
     id: "nexus-core",
@@ -234,7 +234,7 @@ export const projects: Project[] = [
       "Built-in telemetry, error tracking, and performance monitoring",
       "Adopted by developer teams for accelerated MVP delivery",
     ],
-    githubUrl: "https://github.com/YogenderVermaa",
+    githubUrl: "https://github.com/yogi-ya",
   },
 ];
 
@@ -255,71 +255,127 @@ export const experiences: Experience[] = [
   {
     id: "exp-1",
     index: "01",
-    period: "2024 — Present",
-    role: "Full-Stack & AI Systems Engineer",
-    company: "Independent / Stealth Startups",
-    location: "Remote",
-    type: "Contract & Products",
+    period: "Aug 2026 — Present",
+    role: "Full Stack Developer",
+    company: "ICFAI Group",
+    location: "Himachal Pradesh, India · On-site",
+    type: "Full-time",
     description:
-      "Architecting AI-native platforms, autonomous multi-agent pipelines, and high-velocity web applications with Next.js 15, TypeScript, and modern vector databases.",
+      "Developing full-stack web platforms and institutional systems using Next.js, React, and Node.js. Building type-safe REST APIs and optimizing database workflows for daily academic and administrative operations.",
     highlights: [
-      "Engineered end-to-end RAG retrieval pipelines and multi-agent systems with streaming LLM responses and sub-100ms UI latency.",
-      "Architected type-safe API backends with PostgreSQL, Prisma, Redis caching, and edge cloud deployments.",
-      "Built production-ready web products from high-fidelity UI design systems to cloud deployment.",
+      "Engineered full-stack features with Next.js App Router, TypeScript, and React Server Components.",
+      "Designed and documented RESTful APIs with secure session handling and role-based access.",
+      "Managed PostgreSQL and MongoDB databases, optimizing queries and data integrity across internal portals.",
     ],
-    skills: ["Next.js 15", "React 19", "TypeScript", "AI Agents", "RAG", "PostgreSQL", "Tailwind CSS"],
+    skills: [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Node.js",
+      "Express.js",
+      "PostgreSQL",
+      "MongoDB",
+      "Tailwind CSS",
+    ],
   },
   {
     id: "exp-2",
     index: "02",
-    period: "2023 — 2024",
-    role: "Senior Frontend & Web Developer",
-    company: "Client Collaborations & Digital Products",
-    location: "Remote",
-    type: "Full-Time / Freelance",
+    period: "Jan 2026 — Jun 2026",
+    role: "Full Stack Developer",
+    company: "Excellence Technology",
+    location: "Mohali, Punjab · On-site",
+    type: "Full-time",
     description:
-      "Led frontend development for high-conversion web applications, interactive SaaS dashboards, and responsive design systems.",
+      "Designed and developed responsive web apps using React, Node.js, Express, MongoDB, and modern JavaScript. Implemented RESTful APIs and optimized backend performance.",
     highlights: [
-      "Built fluid, tactile web applications utilizing React Server Components, GSAP, and Framer Motion for 60fps animations.",
-      "Refactored complex state management and asset delivery pipelines, reducing first contentful paint (FCP) by 40%.",
-      "Created modular, accessible design system component libraries adopted across multi-repository codebases.",
+      "Built responsive, mobile-first user interfaces using React, JavaScript (ES6+), and modern CSS.",
+      "Implemented RESTful backend endpoints in Node.js and Express with robust input validation.",
+      "Integrated MongoDB database collections and improved query execution times.",
     ],
-    skills: ["React", "Next.js", "TypeScript", "GSAP", "Framer Motion", "REST / GraphQL"],
+    skills: [
+      "React",
+      "Node.js",
+      "Express.js",
+      "MongoDB",
+      "JavaScript",
+      "PostgreSQL",
+      "Tailwind CSS",
+      "REST APIs",
+    ],
   },
   {
     id: "exp-3",
     index: "03",
-    period: "2022 — 2023",
-    role: "Full-Stack Software Developer",
-    company: "Web & SaaS Solutions",
-    location: "Remote",
-    type: "Engineering",
+    period: "Jun 2024 — Aug 2024",
+    role: "Backend Developer",
+    company: "Solitaire Infosys",
+    location: "Chandigarh, India · On-site",
+    type: "Internship",
     description:
-      "Engineered scalable web architectures, database schemas, secure authentication pipelines, and automated cloud workflows.",
+      "Built a full-featured social media platform backend in Node.js/Express with secure JWT authentication, role-based access control, and RESTful APIs.",
     highlights: [
-      "Designed secure database architectures and RESTful microservices with Node.js, Express, MongoDB, and PostgreSQL.",
-      "Implemented client-side encryption and secure credential management using modern Web Crypto APIs.",
-      "Collaborated with cross-functional teams to ship feature releases in high-velocity agile sprints.",
+      "Developed backend architecture for user feeds, post interactions, and media data pipelines.",
+      "Configured secure authentication flows using JWT tokens, bcrypt password hashing, and HTTP-only cookies.",
+      "Enforced role-based access control (RBAC) across protected endpoints and secured database operations.",
     ],
-    skills: ["Node.js", "Express", "PostgreSQL", "MongoDB", "Web Crypto API", "Docker"],
+    skills: [
+      "Node.js",
+      "Express.js",
+      "MongoDB",
+      "JWT Auth",
+      "REST APIs",
+      "API Security",
+    ],
   },
   {
     id: "exp-4",
     index: "04",
-    period: "2021 — 2022",
-    role: "Frontend Developer & UI Engineer",
-    company: "Creative Tech & Web Studio",
-    location: "Remote",
-    type: "Frontend",
+    period: "Jul 2023 — Oct 2023",
+    role: "Full Stack Developer",
+    company: "The Website Makers",
+    location: "Andhra Pradesh, India · Remote",
+    type: "Internship",
     description:
-      "Crafted interactive digital experiences, responsive client portfolios, and modern web applications.",
+      "Developed end-to-end web features in React and Node.js. Built reusable UI components and created REST APIs for data operations.",
     highlights: [
-      "Built responsive, mobile-first web experiences with modern CSS, semantic HTML, and fluid micro-interactions.",
-      "Optimized SEO, core web vitals, and accessibility (WCAG AA compliance) across client deliverables.",
+      "Created reusable frontend component libraries using React and Bootstrap for client deliverables.",
+      "Built backend data endpoints in Node.js to handle user inputs, form submissions, and database records.",
+      "Ensured cross-browser responsiveness, clean layouts, and accessible UI standards.",
     ],
-    skills: ["JavaScript", "React", "CSS3 / Sass", "Tailwind CSS", "Responsive Design"],
+    skills: [
+      "React",
+      "Node.js",
+      "Express.js",
+      "MongoDB",
+      "Bootstrap",
+      "REST APIs",
+    ],
   },
 ];
+
+export type Education = {
+  institution: string;
+  degree: string;
+  period: string;
+  cgpa: string;
+  coursework: string[];
+};
+
+export const education: Education = {
+  institution: "The ICFAI University, Himachal Pradesh",
+  degree: "B.Tech in Computer Science & Engineering",
+  period: "2022 – 2026",
+  cgpa: "7.9",
+  coursework: [
+    "Data Structures & Algorithms",
+    "AI & Machine Learning",
+    "Database Management Systems",
+    "Object Oriented Programming",
+    "Operating Systems",
+    "Computer Networks",
+  ],
+};
 
 export type Insight = {
   id: string;

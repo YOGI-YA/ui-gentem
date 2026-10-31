@@ -49,7 +49,7 @@ export default function About() {
   const doubledValues = [...marqueeValues, ...marqueeValues];
 
   return (
-    <section id="about" className="border-b border-border py-28 md:py-36">
+    <section id="manifesto" className="border-b border-border py-28 md:py-36">
       <div className="mx-auto max-w-[1100px] px-6 md:px-10">
         
 
