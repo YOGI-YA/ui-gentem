@@ -1,33 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 /* -------------------------------------------------------------------------- */
-/*  Content: Core Engineering Beliefs                                         */
+/*  Content: four words, one line each                                        */
 /* -------------------------------------------------------------------------- */
 
 const PRINCIPLES = [
-  {
-    num: "01",
-    title: "Simplicity over cleverness",
-    body: "Clear boundaries between UI, API, and database. Code should be straightforward to read, easy to modify, and easy to delete when it's no longer needed.",
-  },
-  {
-    num: "02",
-    title: "Speed is respect",
-    body: "Fast page loads and instant interactions aren't an afterthought. Sub-second loads, zero layout shifts, and light bundles respect the user's attention.",
-  },
-  {
-    num: "03",
-    title: "Useful AI over gimmick AI",
-    body: "Integrating language models and automated pipelines where they solve genuine friction — semantic search, parsing, and background workflows — not as a superficial marketing sticker.",
-  },
-  {
-    num: "04",
-    title: "Craft in the small things",
-    body: "Accessible contrast, natural spring motion, graceful empty states, and keyboard navigation. The difference between good and great lives in the margins.",
-  },
+  { num: "01", word: "Simple", line: "Easy to read. Easy to delete." },
+  { num: "02", word: "Fast", line: "Speed is respect." },
+  { num: "03", word: "Useful", line: "AI only where it solves something." },
+  { num: "04", word: "Crafted", line: "Care lives in the small things." },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -40,72 +24,92 @@ const smooth = (a: number, b: number, v: number) => {
   return t * t * (3 - 2 * t);
 };
 
-// Extra scroll distance (in viewport heights) the section stays pinned for.
-const PIN_DISTANCE = 2;
+const PIN_DISTANCE = 4; // extra scroll, in viewport heights
+const WORDS_START = 0.24; // scroll progress where the first word begins
+const SEG = (1 - WORDS_START) / PRINCIPLES.length;
 
 export default function PhilosophySection() {
+  const [reduced, setReduced] = useState(false);
+
   const trackRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const teaserRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const wordsRef = useRef<HTMLDivElement>(null);
+  const counterRef = useRef<HTMLDivElement>(null);
+  const countNumRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setReduced(true);
+      return;
+    }
+
     const track = trackRef.current;
-    const stage = stageRef.current;
     const frame = frameRef.current;
     const media = mediaRef.current;
     const scrim = scrimRef.current;
     const teaser = teaserRef.current;
-    const overlay = overlayRef.current;
-    if (!track || !stage || !frame || !media || !scrim || !overlay || !teaser)
-      return;
+    const words = wordsRef.current;
+    if (!track || !frame || !media || !scrim || !teaser || !words) return;
 
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const wordEls = Array.from(
+      words.querySelectorAll<HTMLElement>("[data-word]")
+    );
 
     const render = () => {
       const range = track.offsetHeight - window.innerHeight;
-      const p = reduceMotion
-        ? 1
-        : range > 0
-        ? clamp(-track.getBoundingClientRect().top / range, 0, 1)
-        : 0;
+      const p =
+        range > 0 ? clamp(-track.getBoundingClientRect().top / range, 0, 1) : 0;
       const vw = window.innerWidth;
 
-      // Frame: aperture window that opens to full-bleed.
+      // Aperture opens to full-bleed
       const [insetX, insetY, radius] =
         vw < 640 ? [7, 22, 20] : vw < 1024 ? [14, 20, 28] : [27, 18, 32];
-      const open = smooth(0, 0.52, p);
+      const open = smooth(0, 0.2, p);
       frame.style.clipPath = `inset(${(insetY * (1 - open)).toFixed(2)}% ${(
         insetX *
         (1 - open)
       ).toFixed(2)}% round ${(radius * (1 - open)).toFixed(1)}px)`;
       media.style.transform = `scale(${(1.22 - 0.22 * open).toFixed(4)})`;
-      scrim.style.opacity = (0.35 + 0.55 * open).toFixed(3);
+      scrim.style.opacity = (0.4 + 0.45 * open).toFixed(3);
 
-      // Teaser card fades out smoothly as aperture opens
-      const t = 1 - smooth(0.04, 0.32, p);
+      const t = 1 - smooth(0.02, 0.12, p);
       teaser.style.opacity = t.toFixed(3);
       teaser.style.transform = `translate3d(0, ${(-18 * (1 - t)).toFixed(1)}px, 0)`;
-
       if (hintRef.current) {
-        hintRef.current.style.opacity = (1 - smooth(0, 0.16, p)).toFixed(3);
+        hintRef.current.style.opacity = (1 - smooth(0, 0.08, p)).toFixed(3);
       }
 
-      // Content fades up in order, each at its own data-start point.
-      overlay.querySelectorAll<HTMLElement>("[data-start]").forEach((el) => {
-        const start = parseFloat(el.dataset.start || "0");
-        const val = smooth(start, start + 0.12, p);
-        el.style.opacity = val.toFixed(3);
-        el.style.transform = `translate3d(0, ${(16 * (1 - val)).toFixed(1)}px, 0)`;
+      // Words: blur + scale in, hold, blur + scale out
+      wordEls.forEach((el, i) => {
+        const local = (p - (WORDS_START + i * SEG)) / SEG;
+        const enter = smooth(0, 0.28, local);
+        const exit = i < wordEls.length - 1 ? smooth(0.72, 1, local) : 0;
+        const v = enter * (1 - exit);
+        const scale = 0.86 + 0.14 * enter + 0.18 * exit;
+        const y = (1 - enter) * 80 - exit * 80;
+        const blur = (1 - enter) * 20 + exit * 20;
+        el.style.opacity = v.toFixed(3);
+        el.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
+        el.style.filter = blur > 0.2 ? `blur(${blur.toFixed(1)}px)` : "none";
       });
-      overlay.setAttribute("aria-hidden", p < 0.4 ? "true" : "false");
+
+      // Counter
+      if (counterRef.current) {
+        counterRef.current.style.opacity = smooth(0.18, 0.26, p).toFixed(3);
+      }
+      if (countNumRef.current) {
+        const idx = clamp(
+          Math.floor((p - WORDS_START + 0.02) / SEG),
+          0,
+          PRINCIPLES.length - 1
+        );
+        countNumRef.current.textContent = PRINCIPLES[idx].num;
+      }
 
       if (barRef.current) {
         barRef.current.style.transform = `scaleX(${p.toFixed(3)})`;
@@ -131,22 +135,57 @@ export default function PhilosophySection() {
     };
   }, []);
 
+  /* Reduced motion: no pinning, just the four words */
+  if (reduced) {
+    return (
+      <section id="philosophy" className="relative w-full bg-[#06080d] py-24">
+        <div id="about" className="absolute -top-20" />
+        <div id="about-me" className="absolute -top-20" />
+        <div className="mx-auto max-w-5xl space-y-12 px-6">
+          <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-[#E8B04A]">
+            Philosophy
+          </h2>
+          {PRINCIPLES.map((p) => (
+            <div key={p.num}>
+              <p className="text-6xl font-semibold uppercase tracking-tighter text-[#F1EEE6] sm:text-8xl">
+                {p.word}
+                <span className="text-[#E8B04A]">.</span>
+              </p>
+              <p className="mt-3 font-mono text-xs uppercase tracking-[0.2em] text-[#C9C6BD]">
+                {p.line}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="philosophy" className="relative w-full bg-[#06080d]">
       <div id="about" className="absolute -top-20" />
       <div id="about-me" className="absolute -top-20" />
-      <h2 className="sr-only">Philosophy &amp; Principles</h2>
+
+      {/* Screen readers get the plain list */}
+      <div className="sr-only">
+        <h2>Philosophy</h2>
+        <ul>
+          {PRINCIPLES.map((p) => (
+            <li key={p.num}>
+              {p.word}. {p.line}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div
         ref={trackRef}
         style={{ height: `${(1 + PIN_DISTANCE) * 100}svh` }}
         className="relative"
+        aria-hidden="true"
       >
-        <div
-          ref={stageRef}
-          className="sticky top-0 h-svh w-full overflow-hidden"
-        >
-          {/* The aperture: starts as a framed window, opens to full-bleed */}
+        <div className="sticky top-0 h-svh w-full overflow-hidden">
+          {/* Image window that opens to full-bleed */}
           <div
             ref={frameRef}
             className="absolute inset-0 will-change-[clip-path]"
@@ -170,137 +209,68 @@ export default function PhilosophySection() {
               ref={scrimRef}
               className="absolute inset-0"
               style={{
-                opacity: 0.35,
+                opacity: 0.4,
                 background:
-                  "linear-gradient(100deg, rgba(6,8,13,.96) 0%, rgba(6,8,13,.88) 55%, rgba(6,8,13,.75) 100%)",
+                  "radial-gradient(ellipse at center, rgba(6,8,13,.7) 0%, rgba(6,8,13,.95) 100%)",
               }}
             />
 
-            {/* Initial Teaser: Centered in the aperture frame before it opens */}
+            {/* Teaser while the window is closed */}
             <div
               ref={teaserRef}
               className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
             >
-              <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#E8B04A]">
-                01 // Approach &amp; Craft
-              </p>
-              <h3 className="mt-4 text-3xl font-semibold tracking-tight text-[#F1EEE6] sm:text-5xl md:text-6xl">
-                Philosophy
+
+              <h3 className="mt-4 text-4xl font-semibold tracking-tight text-[#F1EEE6] sm:text-6xl">
+                How I build.
               </h3>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-[#C9C6BD] sm:text-base">
-                How I think about building software that stays fast, simple, and reliable.
-              </p>
-            </div>
-
-            {/* Revealed content: Appears as the aperture opens full-bleed */}
-            <div
-              ref={overlayRef}
-              aria-hidden="true"
-              className="absolute inset-0 flex items-center"
-            >
-              <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 sm:px-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
-                {/* Left: Core Manifesto */}
-                <div className="flex flex-col justify-center space-y-5">
-                  <p
-                    data-start="0.38"
-                    className="font-mono text-[11px] uppercase tracking-[0.25em] text-[#E8B04A]"
-                    style={{ opacity: 0 }}
-                  >
-                    01 // Philosophy
-                  </p>
-
-                  <h3
-                    data-start="0.42"
-                    className="max-w-xl text-2xl font-semibold leading-[1.18] tracking-tight text-[#F1EEE6] sm:text-4xl lg:text-5xl"
-                    style={{ opacity: 0 }}
-                  >
-                    Simplicity is the hardest thing to build.
-                  </h3>
-
-                  <p
-                    data-start="0.48"
-                    className="max-w-lg text-sm leading-relaxed text-[#C9C6BD] sm:text-base"
-                    style={{ opacity: 0 }}
-                  >
-                    I build full-stack web products from the database to the interface. I believe the best software is quiet, fast, and does what it promises without friction. No unnecessary abstractions, no bloated dependencies, and no AI for the sake of hype.
-                  </p>
-
-                  <div
-                    data-start="0.54"
-                    className="mt-2 h-px max-w-lg bg-white/15"
-                    style={{ opacity: 0 }}
-                  />
-
-                  {/* Grounded focus points */}
-                  <div
-                    data-start="0.58"
-                    className="grid grid-cols-2 gap-4 pt-1 sm:grid-cols-3 max-w-lg"
-                    style={{ opacity: 0 }}
-                  >
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
-                        Focus
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-[#F1EEE6]">
-                        Web Apps &amp; AI
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
-                        Architecture
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-[#F1EEE6]">
-                        Vertical Slices
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
-                        Standard
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-[#E8B04A]">
-                        Sub-second TTFB
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: The 4 Principles */}
-                <ul className="flex flex-col justify-center divide-y divide-white/10">
-                  {PRINCIPLES.map((item, i) => (
-                    <li
-                      key={item.num}
-                      data-start={(0.52 + i * 0.08).toFixed(2)}
-                      className="group py-4 first:pt-0 last:pb-0 sm:py-5"
-                      style={{ opacity: 0 }}
-                    >
-                      <div className="flex items-baseline gap-3">
-                        <span className="font-mono text-xs text-[#E8B04A]">
-                          {item.num}
-                        </span>
-                        <h4 className="text-base font-medium text-[#F1EEE6] sm:text-lg">
-                          {item.title}
-                        </h4>
-                      </div>
-                      <p className="mt-1.5 pl-7 text-xs leading-relaxed text-[#B9B6AD] sm:text-sm">
-                        {item.body}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
           </div>
 
-          {/* Scroll hint (visible at start) */}
+          {/* The words */}
+          <div ref={wordsRef} className="pointer-events-none absolute inset-0">
+            {PRINCIPLES.map((p) => (
+              <div
+                key={p.num}
+                data-word
+                className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center will-change-transform"
+                style={{ opacity: 0 }}
+              >
+                {/* Ghost number */}
+                <span
+                  className="absolute select-none text-[60vw] font-semibold leading-none tracking-tighter sm:text-[40vw]"
+                  style={{
+                    color: "transparent",
+                    WebkitTextStroke: "1px rgba(241,238,230,0.1)",
+                  }}
+                >
+                  {p.num}
+                </span>
+
+                <p className="relative text-[21vw] font-semibold uppercase leading-[0.9] tracking-tighter text-[#F1EEE6] sm:text-[15vw]">
+                  {p.word}
+                  <span className="text-[#E8B04A]">.</span>
+                </p>
+                <p className="relative mt-6 font-mono text-[11px] uppercase tracking-[0.25em] text-[#C9C6BD] sm:text-sm">
+                  {p.line}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Counter */}
+          
+
+          {/* Scroll hint */}
           <div
             ref={hintRef}
             className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-xs text-[#C9C6BD]"
           >
-            <span>Scroll to open</span>
+            <span>Scroll</span>
             <span className="h-8 w-px bg-gradient-to-b from-[#C9C6BD] to-transparent motion-safe:animate-pulse" />
           </div>
 
-          {/* Progress along the bottom edge */}
+          {/* Progress */}
           <div className="absolute inset-x-0 bottom-0 h-[2px] bg-white/10">
             <div
               ref={barRef}
