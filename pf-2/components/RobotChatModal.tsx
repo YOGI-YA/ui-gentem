@@ -149,6 +149,7 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
           {/* Animated gradient border */}
           <motion.div
             role="dialog"
+            data-lenis-prevent
             aria-modal="true"
             aria-label="Chat with Yogender's AI assistant"
             initial={{ opacity: 0, y: 40, scale: 0.97 }}
@@ -224,7 +225,15 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
               </header>
 
               {/* Messages */}
-              <div className="no-scrollbar relative flex-1 space-y-5 overflow-y-auto px-5 py-6">
+              <div
+                data-lenis-prevent
+                data-lenis-prevent-wheel
+                data-lenis-prevent-touch
+                onWheel={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                className="no-scrollbar relative min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-6"
+                style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}
+              >
                 {messages.map((m, i) => (
                   <motion.div
                     key={i}
@@ -234,7 +243,7 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
                     className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[88%] px-4 py-3 text-sm leading-relaxed ${
+                      className={`min-w-0 max-w-[88%] break-words px-4 py-3 text-sm leading-relaxed ${
                         m.role === "user"
                           ? "whitespace-pre-wrap rounded-2xl rounded-br-md font-medium text-neutral-950"
                           : "rounded-2xl rounded-bl-md border border-white/[0.08] bg-white/[0.04] text-zinc-100"
