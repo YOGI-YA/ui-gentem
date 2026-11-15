@@ -10,7 +10,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
-import { ArrowUpRight, Github, Linkedin, MapPin } from "lucide-react";
+import { ArrowUpRight, Github, Linkedin, MapPin, ShieldCheck } from "lucide-react";
 import { personalInfo } from "@/lib/data";
 
 const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -21,10 +21,21 @@ interface HeroProps {
   onSayHello: () => void;
 }
 
+interface PixelParticle {
+  x: number;
+  y: number;
+  alpha: number;
+  color: string;
+  size: number;
+}
+
 export default function Hero({ onSayHello }: HeroProps) {
   const reduce = !!useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pixelsRef = useRef<PixelParticle[]>([]);
+  const animFrameRef = useRef<number>(0);
 
   // Live Himachal Pradesh / Indian Standard Time
   const [timeString, setTimeString] = useState<string>("");
@@ -70,22 +81,22 @@ export default function Hero({ onSayHello }: HeroProps) {
     return () => el.removeEventListener("pointermove", onMove);
   }, [reduce, x, y]);
 
-  // 3D Magnetic Card Parallax & Glare
+  // 3D Magnetic Card Parallax & Specular Glare
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [9, -9]), {
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [8, -8]), {
     stiffness: 180,
     damping: 22,
   });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-9, 9]), {
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-8, 8]), {
     stiffness: 180,
     damping: 22,
   });
 
   const glareX = useTransform(mouseX, [-0.5, 0.5], ["15%", "85%"]);
   const glareY = useTransform(mouseY, [-0.5, 0.5], ["15%", "85%"]);
-  const glareBackground = useMotionTemplate`radial-gradient(340px circle at ${glareX} ${glareY}, rgba(255,255,255,0.16), transparent 68%)`;
+  const glareBackground = useMotionTemplate`radial-gradient(340px circle at ${glareX} ${glareY}, rgba(255,255,255,0.15), transparent 68%)`;
 
   const handleCardPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -103,6 +114,106 @@ export default function Hero({ onSayHello }: HeroProps) {
     mouseX.set(0);
     mouseY.set(0);
   }, [mouseX, mouseY]);
+
+  // Interactive Pixel Canvas: spawns digital square pixels under cursor on hover
+  const handlePhotoPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (reduce) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const pxX = e.clientX - rect.left;
+      const pxY = e.clientY - rect.top;
+
+      const pixelSize = 14;
+      const baseCol = Math.floor(pxX / pixelSize);
+      const baseRow = Math.floor(pxY / pixelSize);
+
+      const colorPalette = [
+        "rgba(232, 176, 74, ", // amber
+        "rgba(245, 243, 239, ", // white
+        "rgba(56, 189, 248, ",  // cyan
+        "rgba(232, 176, 74, ",
+      ];
+
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (Math.random() > 0.35) {
+            const posX = (baseCol + dx) * pixelSize;
+            const posY = (baseRow + dy) * pixelSize;
+
+            if (posX >= 0 && posX < canvas.width && posY >= 0 && posY < canvas.height) {
+              const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+              pixelsRef.current.push({
+                x: posX,
+                y: posY,
+                alpha: 0.95,
+                color,
+                size: pixelSize,
+              });
+            }
+          }
+        }
+      }
+
+      // Keep max particles optimal for 120fps
+      if (pixelsRef.current.length > 80) {
+        pixelsRef.current.splice(0, pixelsRef.current.length - 80);
+      }
+    },
+    [reduce]
+  );
+
+  // Resize canvas to match display size
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const syncCanvasSize = () => {
+      if (!canvas) return;
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    syncCanvasSize();
+    window.addEventListener("resize", syncCanvasSize);
+    return () => window.removeEventListener("resize", syncCanvasSize);
+  }, []);
+
+  // Pixel particle render loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = pixelsRef.current.length - 1; i >= 0; i--) {
+        const p = pixelsRef.current[i];
+        p.alpha -= 0.04;
+
+        if (p.alpha <= 0) {
+          pixelsRef.current.splice(i, 1);
+          continue;
+        }
+
+        ctx.fillStyle = `${p.color}${p.alpha.toFixed(2)})`;
+        ctx.fillRect(p.x, p.y, p.size - 1, p.size - 1);
+
+        // Highlight border for hot pixels
+        if (p.alpha > 0.6) {
+          ctx.strokeStyle = `rgba(232, 176, 74, ${(p.alpha * 0.7).toFixed(2)})`;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(p.x, p.y, p.size - 1, p.size - 1);
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(render);
+    };
+
+    animFrameRef.current = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, []);
 
   const focusRing =
     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground";
@@ -216,21 +327,21 @@ export default function Hero({ onSayHello }: HeroProps) {
             </motion.div>
           </div>
 
-          {/* ================= RIGHT COLUMN: EDITORIAL 3D PORTRAIT CARD ================= */}
+          {/* ================= RIGHT COLUMN: INTERACTIVE PIXEL ID CARD ================= */}
           <div className="flex justify-center lg:col-span-5 lg:justify-end">
             <motion.div
               initial={reduce ? false : { opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.25, ease: EASE }}
-              className="relative w-full max-w-[340px] sm:max-w-[380px] [perspective:1000px]"
+              className="relative w-full max-w-[340px] sm:max-w-[370px] [perspective:1000px]"
             >
               {/* Subtle ambient backlight halo */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#E8B04A]/15 via-orange-500/10 to-sky-500/10 blur-2xl opacity-70"
+                className="pointer-events-none absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#E8B04A]/15 via-orange-500/10 to-sky-500/10 blur-2xl opacity-75"
               />
 
-              {/* 3D Tilting Card */}
+              {/* 3D Tilting Physical ID Card Frame */}
               <motion.div
                 ref={cardRef}
                 onPointerMove={handleCardPointerMove}
@@ -240,55 +351,133 @@ export default function Hero({ onSayHello }: HeroProps) {
                   rotateY: reduce ? 0 : rotateY,
                   transformStyle: "preserve-3d",
                 }}
-                className="group relative select-none rounded-[24px] border border-white/[0.12] bg-neutral-900/60 p-3 shadow-2xl backdrop-blur-xl transition-shadow duration-500 hover:border-white/25 hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]"
+                className="group relative select-none rounded-[26px] border border-white/[0.14] bg-neutral-900/85 p-3.5 shadow-2xl backdrop-blur-xl transition-shadow duration-500 hover:border-white/30 hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]"
               >
-                {/* Portrait Image Frame */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-neutral-950">
+                {/* ID Badge Punch Slot / Lanyard Hole */}
+                <div className="mx-auto mb-2.5 h-1.5 w-12 rounded-full border border-white/10 bg-neutral-950 shadow-inner" />
+
+                {/* ID Card Top Bar: Serial & Smart Chip */}
+                <div className="mb-2.5 flex items-center justify-between px-1">
+                  {/* <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"> */}
+                    {/* <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> */}
+                    {/* <span>DEV ID // 2026</span> */}
+                  {/* </div> */}
+
+                  {/* Metallic Smart Card IC Chip */}
+                  {/* <div
+                    title="Smart Card Microchip"
+                    className="flex h-5 w-7 items-center justify-center rounded border border-amber-500/40 bg-gradient-to-br from-amber-500/25 via-yellow-600/15 to-amber-900/30 p-0.5 shadow-sm"
+                  >
+                    <div className="grid h-full w-full grid-cols-2 gap-0.5 rounded-[2px] border border-amber-400/30">
+                      <div className="border-r border-amber-400/25" />
+                      <div />
+                    </div>
+                  </div> */}
+                </div>
+
+                {/* Portrait Photo Frame with Interactive Pixel Canvas */}
+                <div
+                  onPointerMove={handlePhotoPointerMove}
+                  className="relative aspect-[4/5] w-full overflow-hidden rounded-[18px] border border-white/10 bg-neutral-950 cursor-crosshair"
+                >
                   <Image
                     src="/images/yogi.jpg"
                     alt={personalInfo.name}
                     fill
                     priority
-                    sizes="(max-width: 640px) 340px, (max-width: 1024px) 380px, 400px"
+                    sizes="(max-width: 640px) 340px, (max-width: 1024px) 370px, 400px"
                     className="object-cover object-[center_28%] transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                   />
 
                   {/* Soft natural film grain */}
                   <div className="grain-overlay pointer-events-none opacity-30" />
 
-                  {/* Subtle lower gradient for caption readability */}
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
+                  {/* Interactive Pixel Canvas Overlay (Draws glowing pixels on hover) */}
+                  <canvas
+                    ref={canvasRef}
+                    className="pointer-events-none absolute inset-0 z-20 h-full w-full"
                   />
 
-                  {/* Understated bottom caption */}
-                  <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-                    <p className="text-sm font-medium tracking-tight text-white">
-                      {personalInfo.name}
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/70">
-                      <MapPin size={11} className="text-[#E8B04A]" />
-                      <span>Himachal Pradesh, India</span>
-                      {timeString && (
-                        <>
-                          <span className="text-white/40">·</span>
-                          <span className="font-mono text-[11px] text-white/80">
-                            {timeString}
-                          </span>
-                        </>
-                      )}
-                    </p>
+                  {/* Holographic Pixel Mesh Texture (reveals softly on hover) */}
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-40"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)",
+                      backgroundSize: "8px 8px",
+                    }}
+                  />
+
+                  {/* Security Clearance Tag at top-right */}
+                  <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-full border border-white/15 bg-black/60 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/90 backdrop-blur-md">
+                    <ShieldCheck size={10} className="text-[#E8B04A]" />
+                    <span>VERIFIED</span>
+                  </div>
+
+                  {/* ID Alignment Corner Crosshairs */}
+                  <div className="pointer-events-none absolute top-2 left-2 z-10 font-mono text-[9px] text-white/40">
+                    +
+                  </div>
+                  <div className="pointer-events-none absolute bottom-2 left-2 z-10 font-mono text-[9px] text-white/40">
+                    +
+                  </div>
+                  <div className="pointer-events-none absolute bottom-2 right-2 z-10 font-mono text-[9px] text-white/40">
+                    +
                   </div>
 
                   {/* Dynamic Specular Mouse Glare Overlay */}
                   {!reduce && (
                     <motion.div
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      className="pointer-events-none absolute inset-0 z-15 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       style={{ background: glareBackground }}
                     />
                   )}
+                </div>
+
+                {/* ID Card Bottom Details & Barcode */}
+                <div className="mt-3 px-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                        NAME // ROLE
+                      </p>
+                      <p className="text-sm font-semibold tracking-tight text-white">
+                        {personalInfo.name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                        ORIGIN
+                      </p>
+                      <p className="flex items-center justify-end gap-1 text-xs text-white/80">
+                        <MapPin size={11} className="text-[#E8B04A]" />
+                        <span>Himachal, IN</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Barcode & Security Strip */}
+                  <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2.5">
+                    {/* Realistic Barcode */}
+                    <div className="flex items-center gap-[2px] opacity-75">
+                      {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 3, 1, 4, 2, 1, 3].map(
+                        (w, idx) => (
+                          <span
+                            key={idx}
+                            className="h-3 bg-foreground/80 rounded-[0.5px]"
+                            style={{ width: `${w}px` }}
+                          />
+                        )
+                      )}
+                    </div>
+
+                    {/* Serial & Live Timestamp */}
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-muted">
+                      № YV-7717 {timeString ? `· ${timeString}` : ""}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
