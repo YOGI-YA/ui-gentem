@@ -1,8 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Terminal, User, Sparkles, Zap } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowUp,
+  Briefcase,
+  Code2,
+  FolderGit2,
+  Mail,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import FormattedChatMessage from "@/components/FormattedChatMessage";
 
 interface Message {
@@ -15,74 +23,116 @@ interface RobotChatModalProps {
   onClose: () => void;
 }
 
+const ACCENT = "#E8B04A";
+const EMAIL = "yogender.tech@gmail.com";
+
+const INITIAL: Message[] = [
+  {
+    role: "assistant",
+    content:
+      "Hi, I'm Yogender's AI assistant. Ask me about his experience, tech stack, projects, or how to work with him.",
+  },
+];
+
 const SUGGESTIONS = [
-  "What is Yogender's tech stack?",
-  "Tell me about his work at ICFAI Group",
-  "What projects has he built?",
-  "How can I contact or hire him?",
+  { icon: Code2, label: "Tech stack", prompt: "What is Yogender's tech stack?" },
+  {
+    icon: Briefcase,
+    label: "Experience",
+    prompt: "Tell me about his work at ICFAI Group",
+  },
+  {
+    icon: FolderGit2,
+    label: "Projects",
+    prompt: "What projects has he built?",
+  },
+  { icon: Mail, label: "Hire him", prompt: "How can I contact or hire him?" },
 ];
 
 export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: `Hi there! 👋 Welcome to Yogender's portfolio console powered by **Groq**.\n\nFeel free to ask about his full-stack work at **ICFAI Group**, previous roles, **Next.js & TypeScript** projects, or how to collaborate!`,
-    },
-  ]);
+  const reduce = !!useReducedMotion();
+  const [messages, setMessages] = useState<Message[]>(INITIAL);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeModel, setActiveModel] = useState<string>("Groq Qwen 27B");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [activeModel, setActiveModel] = useState("Groq");
+  const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-scroll to the latest message
   useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isOpen]);
+    if (isOpen) endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading, isOpen]);
 
-  const handleSend = async (textToSend?: string) => {
-    const text = textToSend || input;
-    if (!text.trim() || loading) return;
+  // Focus input, lock page scroll, close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 350);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isOpen, onClose]);
 
-    const newMessages: Message[] = [...messages, { role: "user", content: text }];
-    setMessages(newMessages);
-    setInput("");
-    setLoading(true);
+  const handleSend = useCallback(
+    async (textToSend?: string) => {
+      const text = (textToSend ?? input).trim();
+      if (!text || loading) return;
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
-      });
+      const next: Message[] = [...messages, { role: "user", content: text }];
+      setMessages(next);
+      setInput("");
+      setLoading(true);
 
-      const data = await res.json();
-      if (data.reply) {
-        setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-        if (data.model) {
-          setActiveModel(data.isGroq ? `Groq (${data.model})` : data.model);
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: next }),
+        });
+        const data = await res.json();
+
+        if (data.reply) {
+          setMessages((p) => [...p, { role: "assistant", content: data.reply }]);
+          if (data.model) {
+            setActiveModel(data.isGroq ? `Groq · ${data.model}` : data.model);
+          }
+        } else {
+          setMessages((p) => [
+            ...p,
+            {
+              role: "assistant",
+              content: `I couldn't reach the server right now. Please try again, or email **${EMAIL}** directly.`,
+            },
+          ]);
         }
-      } else {
-        setMessages((prev) => [
-          ...prev,
+      } catch {
+        setMessages((p) => [
+          ...p,
           {
             role: "assistant",
-            content: "Sorry, I couldn't reach the server right now. Please try again or reach out directly via email at **yogender.tech@gmail.com**.",
+            content: `Network error. Please check your connection, or email **${EMAIL}** directly.`,
           },
         ]);
+      } finally {
+        setLoading(false);
+        inputRef.current?.focus();
       }
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Network error. Please check your internet connection or email **yogender.tech@gmail.com** directly.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    },
+    [input, loading, messages]
+  );
+
+  const reset = () => {
+    if (loading) return;
+    setMessages(INITIAL);
+    setInput("");
   };
+
+  const showSuggestions = messages.length === 1 && !loading;
 
   return (
     <AnimatePresence>
@@ -91,209 +141,193 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md"
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 z-[120] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-4"
         >
-          {/* Backdrop click to close */}
-          <div className="absolute inset-0" onClick={onClose} />
+          <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
-          {/* Spider Crazy Shape Container */}
+          {/* Animated gradient border */}
           <motion.div
-            initial={{ scale: 0.92, y: 35, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.92, y: 35, opacity: 0 }}
-            transition={{ type: "spring", damping: 26, stiffness: 320 }}
-            style={{
-              clipPath:
-                "polygon(0 22px, 22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px))",
-            }}
-            className="relative z-10 flex flex-col w-full max-w-lg h-[86vh] sm:h-[620px] bg-[#0c0d12] border border-white/20 shadow-[0_0_60px_rgba(0,0,0,0.9),0_0_30px_rgba(255,255,255,0.06)] overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Chat with Yogender's AI assistant"
+            initial={{ opacity: 0, y: 40, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.97 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="relative z-10 h-[90svh] w-full max-w-[520px] overflow-hidden rounded-t-[28px] p-px shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)] sm:h-[660px] sm:rounded-[28px]"
           >
-            {/* Subtle Spider Web Background Watermark */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.04]">
-              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="spider-web-modal" width="100" height="100" patternUnits="userSpaceOnUse">
-                    <line x1="0" y1="0" x2="100" y2="100" stroke="#ffffff" strokeWidth="1" />
-                    <line x1="100" y1="0" x2="0" y2="100" stroke="#ffffff" strokeWidth="1" />
-                    <line x1="50" y1="0" x2="50" y2="100" stroke="#ffffff" strokeWidth="0.5" />
-                    <line x1="0" y1="50" x2="100" y2="50" stroke="#ffffff" strokeWidth="0.5" />
-                    <circle cx="50" cy="50" r="25" fill="none" stroke="#ffffff" strokeWidth="0.8" />
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" strokeWidth="0.8" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#spider-web-modal)" />
-              </svg>
-            </div>
+            <div className="absolute inset-0 bg-white/10" />
+            {!reduce && (
+              <motion.div
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 aspect-square w-[160%] -translate-x-1/2 -translate-y-1/2"
+                style={{
+                  background: `conic-gradient(from 0deg, transparent 0 62%, ${ACCENT} 82%, transparent 100%)`,
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 9, ease: "linear", repeat: Infinity }}
+              />
+            )}
 
-            {/* Header: Clean, standard developer console */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#12131a] relative z-10">
-              <div className="flex items-center gap-3">
-                <div
-                  style={{
-                    clipPath:
-                      "polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))",
-                  }}
-                  className="relative flex items-center justify-center w-10 h-10 bg-white/10 border border-white/20 text-white"
-                >
-                  <Terminal size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-white tracking-wide">
+            {/* Panel */}
+            <div className="relative flex h-full flex-col overflow-hidden rounded-t-[27px] bg-[#0a0b0f] sm:rounded-[27px]">
+              {/* Ambient glow */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-32 left-1/2 h-64 w-[120%] -translate-x-1/2 rounded-full blur-3xl"
+                style={{ background: `${ACCENT}14` }}
+              />
+
+              {/* Header */}
+              <header className="relative flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold text-neutral-950"
+                      style={{
+                        background: `linear-gradient(135deg, ${ACCENT}, #f6d58f)`,
+                      }}
+                    >
+                      YV
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0a0b0f] bg-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold tracking-tight text-white">
                       Yogender Verma
                     </h3>
-                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 font-mono">
-                      <Zap size={10} />
-                      {activeModel}
-                    </span>
+                    <p className="text-xs text-zinc-400">
+                      AI assistant · Open to opportunities
+                    </p>
                   </div>
-                  <p className="text-[11px] text-zinc-400 font-mono">
-                    Himachal, India &bull; Open to Work &amp; Opportunities
-                  </p>
                 </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={reset}
+                    disabled={loading || messages.length === 1}
+                    aria-label="Clear conversation"
+                    title="Clear conversation"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <RotateCcw size={15} />
+                  </button>
+                  <button
+                    onClick={onClose}
+                    aria-label="Close chat"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </header>
+
+              {/* Messages */}
+              <div className="no-scrollbar relative flex-1 space-y-5 overflow-y-auto px-5 py-6">
+                {messages.map((m, i) => (
+                  <motion.div
+                    key={i}
+                    initial={reduce ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[88%] px-4 py-3 text-sm leading-relaxed ${
+                        m.role === "user"
+                          ? "whitespace-pre-wrap rounded-2xl rounded-br-md font-medium text-neutral-950"
+                          : "rounded-2xl rounded-bl-md border border-white/[0.08] bg-white/[0.04] text-zinc-100"
+                      }`}
+                      style={
+                        m.role === "user" ? { background: ACCENT } : undefined
+                      }
+                    >
+                      {m.role === "assistant" ? (
+                        <FormattedChatMessage content={m.content} />
+                      ) : (
+                        m.content
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Suggestions: only before the first question */}
+                {showSuggestions && (
+                  <motion.div
+                    initial={reduce ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25, duration: 0.5 }}
+                    className="grid grid-cols-2 gap-2.5 pt-2"
+                  >
+                    {SUGGESTIONS.map(({ icon: Icon, label, prompt }) => (
+                      <button
+                        key={label}
+                        onClick={() => handleSend(prompt)}
+                        className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left transition-all duration-300 hover:border-[#E8B04A]/50 hover:bg-white/[0.06]"
+                      >
+                        <Icon
+                          size={16}
+                          className="shrink-0 text-zinc-400 transition-colors group-hover:text-[#E8B04A]"
+                        />
+                        <span className="text-[13px] font-medium text-zinc-200">
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md border border-white/[0.08] bg-white/[0.04] px-4 py-3.5">
+                      {[0, 0.15, 0.3].map((d) => (
+                        <span
+                          key={d}
+                          className="h-1.5 w-1.5 animate-bounce rounded-full"
+                          style={{ background: ACCENT, animationDelay: `${d}s` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div ref={endRef} />
               </div>
 
-              <button
-                onClick={onClose}
-                className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Messages Body */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar relative z-10">
-              {messages.map((m, idx) => (
-                <div
-                  key={idx}
-                  className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  {m.role === "assistant" && (
-                    <div
-                      style={{
-                        clipPath:
-                          "polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))",
-                      }}
-                      className="shrink-0 flex items-center justify-center w-7 h-7 bg-white/10 text-white border border-white/20 mt-1"
-                    >
-                      <Terminal size={13} />
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      clipPath:
-                        "polygon(0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px))",
-                    }}
-                    className={`max-w-[85%] px-4 py-3 text-xs sm:text-sm leading-relaxed ${
-                      m.role === "user"
-                        ? "bg-white text-zinc-950 font-medium whitespace-pre-wrap"
-                        : "bg-[#14151e] text-zinc-100 border border-white/15 shadow-md"
-                    }`}
-                  >
-                    {m.role === "assistant" ? (
-                      <FormattedChatMessage content={m.content} />
-                    ) : (
-                      m.content
-                    )}
-                  </div>
-
-                  {m.role === "user" && (
-                    <div
-                      style={{
-                        clipPath:
-                          "polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))",
-                      }}
-                      className="shrink-0 flex items-center justify-center w-7 h-7 bg-white/20 text-white border border-white/30 mt-1"
-                    >
-                      <User size={13} />
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {loading && (
-                <div className="flex items-center gap-3">
-                  <div
-                    style={{
-                      clipPath:
-                        "polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))",
-                    }}
-                    className="shrink-0 flex items-center justify-center w-7 h-7 bg-white/10 text-white border border-white/20"
-                  >
-                    <Terminal size={13} />
-                  </div>
-                  <div
-                    style={{
-                      clipPath:
-                        "polygon(0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px))",
-                    }}
-                    className="px-4 py-3 bg-[#14151e] border border-white/15 flex items-center gap-2"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]" />
-                    <span className="text-[11px] font-mono text-zinc-400 ml-1.5">
-                      Querying Groq...
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Quick Suggestions Chips */}
-            <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-white/10 bg-[#0f1016] relative z-10">
-              <Sparkles size={12} className="text-zinc-400 shrink-0 ml-1" />
-              {SUGGESTIONS.map((s, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSend(s)}
-                  disabled={loading}
-                  style={{
-                    clipPath:
-                      "polygon(0 4px, 4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px))",
+              {/* Input */}
+              <div className="relative border-t border-white/[0.07] px-4 pb-4 pt-3">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSend();
                   }}
-                  className="shrink-0 text-[11px] px-3 py-1 bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white border border-white/15 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-1.5 pl-4 transition-colors focus-within:border-[#E8B04A]/50"
                 >
-                  {s}
-                </button>
-              ))}
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask anything about Yogender..."
+                    disabled={loading}
+                    aria-label="Your message"
+                    className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || loading}
+                    aria-label="Send message"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl text-neutral-950 transition-all hover:brightness-110 active:scale-95 disabled:opacity-30"
+                    style={{ background: ACCENT }}
+                  >
+                    <ArrowUp size={17} strokeWidth={2.5} />
+                  </button>
+                </form>
+                <p className="mt-2.5 text-center text-[10px] tracking-wide text-zinc-600">
+                  AI-generated answers may be inaccurate · {activeModel}
+                </p>
+              </div>
             </div>
-
-            {/* Input Bar */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2 p-3 sm:p-4 border-t border-white/10 bg-[#0a0b0e] relative z-10"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about Yogender's experience, tech stack, or projects..."
-                disabled={loading}
-                style={{
-                  clipPath:
-                    "polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))",
-                }}
-                className="flex-1 bg-white/5 border border-white/15 px-4 py-2.5 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/40 transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || loading}
-                style={{
-                  clipPath:
-                    "polygon(0 6px, 6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px))",
-                }}
-                className="flex items-center justify-center w-10 h-10 bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 transition-all font-semibold cursor-pointer"
-              >
-                <Send size={15} />
-              </button>
-            </form>
           </motion.div>
         </motion.div>
       )}

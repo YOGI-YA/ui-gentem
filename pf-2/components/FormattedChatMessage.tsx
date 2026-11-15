@@ -1,143 +1,223 @@
-"use client";
+import { Fragment, type ReactNode } from "react";
 
-import React from "react";
+const ACCENT = "#E8B04A";
 
-interface FormattedChatMessageProps {
-  content: string;
+const INLINE =
+  /(\*\*[^*\n]+\*\*|`[^`\n]+`|\[[^\]\n]+\]\([^)\s]+\)|https?:\/\/[^\s)]+|[\w.+-]+@[\w-]+\.[\w.-]+)/g;
+
+const linkClass =
+  "underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-[#E8B04A] hover:text-[#E8B04A]";
+
+function isSafeUrl(url: string) {
+  return /^(https?:\/\/|mailto:)/i.test(url);
 }
 
-export default function FormattedChatMessage({ content }: FormattedChatMessageProps) {
-  // Helper to parse inline markdown (bold, links, code) within a line
-  const parseInline = (text: string): React.ReactNode[] => {
-    // Regex matching bold **...**, inline code `...`, and markdown links [text](url)
-    const regex = /(\*\*.*?\*\*|`.*?`|\[.*?\]\(.*?\))/g;
-    const parts = text.split(regex);
+function renderInline(text: string): ReactNode[] {
+  return text.split(INLINE).map((part, i) => {
+    if (!part) return null;
 
-    return parts.map((part, i) => {
-      if (!part) return null;
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <strong key={i} className="font-semibold text-white">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+      return (
+        <code
+          key={i}
+          className="rounded-md border border-white/10 bg-white/[0.07] px-1.5 py-0.5 font-mono text-[0.85em] text-[#f6d58f]"
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    const md = part.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+    if (md) {
+      return isSafeUrl(md[2]) ? (
+        <a
+          key={i}
+          href={md[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          {md[1]}
+        </a>
+      ) : (
+        <Fragment key={i}>{md[1]}</Fragment>
+      );
+    }
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          {part}
+        </a>
+      );
+    }
+    if (/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(part)) {
+      return (
+        <a key={i} href={`mailto:${part}`} className={linkClass}>
+          {part}
+        </a>
+      );
+    }
+    return <Fragment key={i}>{part}</Fragment>;
+  });
+}
 
-      // Bold: **text**
-      if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
-        return (
-          <strong key={i} className="font-semibold text-white">
-            {part.slice(2, -2)}
-          </strong>
-        );
+type Block =
+  | { type: "p"; text: string }
+  | { type: "h"; text: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] }
+  | { type: "code"; text: string };
+
+function parse(content: string): Block[] {
+  const lines = content.replace(/\r\n/g, "\n").split("\n");
+  const blocks: Block[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    // Fenced code block
+    if (line.trim().startsWith("```")) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        buf.push(lines[i]);
+        i++;
       }
+      i++;
+      blocks.push({ type: "code", text: buf.join("\n") });
+      continue;
+    }
 
-      // Inline code: `text`
-      if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
-        return (
-          <code
-            key={i}
-            className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-white/10 text-emerald-300 border border-white/10"
-          >
-            {part.slice(1, -1)}
-          </code>
-        );
+    // Heading
+    const h = line.match(/^#{1,4}\s+(.*)$/);
+    if (h) {
+      blocks.push({ type: "h", text: h[1] });
+      i++;
+      continue;
+    }
+
+    // Bullet list
+    if (/^\s*[-*•]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*•]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*[-*•]\s+/, ""));
+        i++;
       }
+      blocks.push({ type: "ul", items });
+      continue;
+    }
 
-      // Link: [text](url)
-      const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
-      if (linkMatch) {
-        return (
-          <a
-            key={i}
-            href={linkMatch[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-emerald-400 hover:text-emerald-300 underline font-medium transition-colors"
-          >
-            {linkMatch[1]}
-          </a>
-        );
+    // Numbered list
+    if (/^\s*\d+[.)]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+[.)]\s+/, ""));
+        i++;
       }
+      blocks.push({ type: "ol", items });
+      continue;
+    }
 
-      return part;
-    });
-  };
+    // Paragraph: gather until blank line or another block starts
+    const buf: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !lines[i].trim().startsWith("```") &&
+      !/^#{1,4}\s+/.test(lines[i]) &&
+      !/^\s*[-*•]\s+/.test(lines[i]) &&
+      !/^\s*\d+[.)]\s+/.test(lines[i])
+    ) {
+      buf.push(lines[i]);
+      i++;
+    }
+    blocks.push({ type: "p", text: buf.join("\n") });
+  }
 
-  // Split content by paragraphs or blocks
-  const blocks = content.split(/\n\n+/);
+  return blocks;
+}
+
+export default function FormattedChatMessage({ content }: { content: string }) {
+  const blocks = parse(content);
 
   return (
-    <div className="space-y-2.5 text-xs sm:text-sm text-zinc-200 leading-relaxed">
-      {blocks.map((block, bIdx) => {
-        const lines = block.split("\n");
-
-        // Check if block is a bullet list
-        const isBulletList = lines.every((line) => /^\s*([*\-•])\s+/.test(line));
-        if (isBulletList) {
-          return (
-            <ul key={bIdx} className="space-y-1.5 my-1.5 pl-1">
-              {lines.map((line, lIdx) => {
-                const cleanLine = line.replace(/^\s*([*\-•])\s+/, "");
-                return (
-                  <li key={lIdx} className="flex items-start gap-2">
-                    <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5" />
-                    <span>{parseInline(cleanLine)}</span>
+    <div className="space-y-3 break-words">
+      {blocks.map((b, idx) => {
+        switch (b.type) {
+          case "h":
+            return (
+              <p
+                key={idx}
+                className="pt-1 text-[13px] font-semibold uppercase tracking-[0.12em] text-white"
+              >
+                {renderInline(b.text)}
+              </p>
+            );
+          case "ul":
+            return (
+              <ul key={idx} className="space-y-1.5">
+                {b.items.map((item, j) => (
+                  <li key={j} className="flex gap-2.5">
+                    <span
+                      className="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: ACCENT }}
+                    />
+                    <span className="min-w-0">{renderInline(item)}</span>
                   </li>
-                );
-              })}
-            </ul>
-          );
-        }
-
-        // Check if block is a numbered list
-        const isNumberedList = lines.every((line) => /^\s*\d+\.\s+/.test(line));
-        if (isNumberedList) {
-          return (
-            <ol key={bIdx} className="space-y-1.5 my-1.5 pl-1">
-              {lines.map((line, lIdx) => {
-                const match = line.match(/^\s*(\d+)\.\s+(.*)/);
-                const num = match ? match[1] : `${lIdx + 1}`;
-                const cleanLine = match ? match[2] : line;
-                return (
-                  <li key={lIdx} className="flex items-start gap-2">
-                    <span className="shrink-0 font-mono text-[10px] text-zinc-400 font-bold mt-0.5">
-                      {num}.
+                ))}
+              </ul>
+            );
+          case "ol":
+            return (
+              <ol key={idx} className="space-y-1.5">
+                {b.items.map((item, j) => (
+                  <li key={j} className="flex gap-2.5">
+                    <span
+                      className="w-4 shrink-0 text-right font-mono text-xs leading-[1.7]"
+                      style={{ color: ACCENT }}
+                    >
+                      {j + 1}.
                     </span>
-                    <span>{parseInline(cleanLine)}</span>
+                    <span className="min-w-0">{renderInline(item)}</span>
                   </li>
-                );
-              })}
-            </ol>
-          );
+                ))}
+              </ol>
+            );
+          case "code":
+            return (
+              <pre
+                key={idx}
+                className="overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-xs leading-relaxed text-zinc-200"
+              >
+                <code>{b.text}</code>
+              </pre>
+            );
+          default:
+            return (
+              <p key={idx} className="whitespace-pre-line">
+                {renderInline(b.text)}
+              </p>
+            );
         }
-
-        // Check if heading: ###
-        if (block.startsWith("### ")) {
-          return (
-            <h5 key={bIdx} className="font-semibold text-white tracking-wide mt-2 mb-1">
-              {parseInline(block.replace(/^###\s+/, ""))}
-            </h5>
-          );
-        }
-
-        // Regular paragraph with potential mixed lines
-        return (
-          <p key={bIdx} className="last:mb-0">
-            {lines.map((line, lIdx) => {
-              if (/^\s*([*\-•])\s+/.test(line)) {
-                const cleanLine = line.replace(/^\s*([*\-•])\s+/, "");
-                return (
-                  <span key={lIdx} className="flex items-start gap-2 my-1 pl-1">
-                    <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5" />
-                    <span>{parseInline(cleanLine)}</span>
-                  </span>
-                );
-              }
-              return (
-                <React.Fragment key={lIdx}>
-                  {parseInline(line)}
-                  {lIdx < lines.length - 1 && <br />}
-                </React.Fragment>
-              );
-            })}
-          </p>
-        );
       })}
     </div>
   );
 }
-
