@@ -6,14 +6,18 @@ import { Menu, X } from "lucide-react";
 import { navLinks, personalInfo } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
+const CAL_URL = "https://cal.com/yogender/30min";
+
+// Keep the desktop bar short; the mobile menu still shows every link.
+const DESKTOP_LABELS = ["about me", "work", "experience", "contact"];
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
-    function onScroll() {
-      setScrolled(window.scrollY > 50);
-    }
+    const onScroll = () => setScrolled(window.scrollY > 50);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -28,39 +32,57 @@ export default function Navbar() {
 
   return (
     <>
-      <header
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-colors duration-500",
-          scrolled ? "backdrop-blur-md bg-background/80 border-b border-border" : "bg-transparent"
-        )}
-      >
-        <nav className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 md:px-10">
+      <header className="fixed inset-x-0 top-0 z-50 px-3 md:px-6">
+        <nav
+          className={cn(
+            "mx-auto flex items-center justify-between transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            scrolled
+              ? "mt-3 max-w-4xl rounded-full border border-border bg-background/70 px-5 py-2.5 backdrop-blur-xl"
+              : "mt-0 max-w-[1440px] border border-transparent px-3 py-5 md:px-6"
+          )}
+        >
           <a
             href="#"
-            className="flex items-center gap-2 text-sm font-semibold tracking-[0.2em] uppercase"
+            className="whitespace-nowrap text-sm font-semibold uppercase tracking-[0.2em]"
           >
-            {/* <span className="h-2 w-2 rounded-full bg-emerald-500" /> */}
             {personalInfo.name}
           </a>
 
-          <ul className="hidden items-center gap-10 md:flex">
-            {navLinks.map((link) => (
-              <li key={link.href}>
+          <ul
+            className="hidden items-center gap-1 md:flex"
+            onMouseLeave={() => setHovered(null)}
+          >
+            {navLinks
+              .filter((l) => DESKTOP_LABELS.includes(l.label.toLowerCase()))
+              .map((link) => (
+              <li key={link.href} className="relative">
                 <a
                   href={link.href}
-                  className="group relative text-xs tracking-[0.15em] uppercase text-foreground/80 transition-colors hover:text-foreground"
+                  onMouseEnter={() => setHovered(link.href)}
+                  className={cn(
+                    "relative z-10 block whitespace-nowrap px-4 py-2 text-xs uppercase tracking-[0.15em] transition-colors duration-300",
+                    hovered === link.href
+                      ? "text-foreground"
+                      : "text-foreground/60"
+                  )}
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-foreground transition-transform duration-300 ease-out group-hover:scale-x-100" />
                 </a>
+                {hovered === link.href && (
+                  <motion.span
+                    layoutId="nav-hover"
+                    className="absolute inset-0 rounded-full bg-foreground/[0.06]"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
               </li>
             ))}
           </ul>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <a
-              href="https://cal.com/yogender/30min"
-              className="hidden rounded-full border border-foreground px-5 py-2 text-xs tracking-[0.15em] transition-colors hover:bg-foreground hover:text-background md:inline-block font-medium"
+              href={CAL_URL}
+              className="hidden whitespace-nowrap rounded-full bg-foreground px-5 py-2 text-xs font-medium tracking-[0.15em] text-background transition-opacity hover:opacity-80 md:inline-block"
             >
               LET&apos;S TALK
             </a>
@@ -81,7 +103,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 bg-background md:hidden"
           >
             {navLinks.map((link, i) => (
@@ -98,12 +120,12 @@ export default function Navbar() {
               </motion.a>
             ))}
             <motion.a
-              href="https://cal.com/yogender/30min"
+              href={CAL_URL}
               onClick={() => setMenuOpen(false)}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + navLinks.length * 0.06, duration: 0.4 }}
-              className="mt-4 rounded-full border border-foreground px-6 py-3 text-xs tracking-[0.15em] font-medium"
+              className="mt-4 rounded-full bg-foreground px-6 py-3 text-xs font-medium tracking-[0.15em] text-background"
             >
               LET&apos;S TALK
             </motion.a>
