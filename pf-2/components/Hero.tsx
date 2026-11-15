@@ -62,26 +62,26 @@ export default function Hero({ onSayHello }: HeroProps) {
   }, []);
 
   // Soft cursor-following ambient background glow
-  const x = useSpring(useMotionValue(0), { stiffness: 80, damping: 20 });
-  const y = useSpring(useMotionValue(0), { stiffness: 80, damping: 20 });
-  const glow = useMotionTemplate`radial-gradient(560px circle at ${x}px ${y}px, rgba(232,176,74,0.11), transparent 65%)`;
+  const glowX = useSpring(useMotionValue(0), { stiffness: 80, damping: 20 });
+  const glowY = useSpring(useMotionValue(0), { stiffness: 80, damping: 20 });
+  const glow = useMotionTemplate`radial-gradient(560px circle at ${glowX}px ${glowY}px, rgba(232,176,74,0.11), transparent 65%)`;
 
   useEffect(() => {
     const el = heroRef.current;
     if (!el || reduce) return;
     const r = el.getBoundingClientRect();
-    x.set(r.width * 0.7);
-    y.set(r.height * 0.35);
+    glowX.set(r.width * 0.7);
+    glowY.set(r.height * 0.35);
     const onMove = (e: PointerEvent) => {
       const b = el.getBoundingClientRect();
-      x.set(e.clientX - b.left);
-      y.set(e.clientY - b.top);
+      glowX.set(e.clientX - b.left);
+      glowY.set(e.clientY - b.top);
     };
     el.addEventListener("pointermove", onMove);
     return () => el.removeEventListener("pointermove", onMove);
-  }, [reduce, x, y]);
+  }, [reduce, glowX, glowY]);
 
-  // 3D Magnetic Card Parallax & Specular Glare
+  // 3D Magnetic Card Parallax & Glare
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -115,7 +115,7 @@ export default function Hero({ onSayHello }: HeroProps) {
     mouseY.set(0);
   }, [mouseX, mouseY]);
 
-  // Interactive Pixel Canvas: spawns digital square pixels under cursor on hover
+  // Interactive Pixel Canvas on ID Photo
   const handlePhotoPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (reduce) return;
@@ -130,9 +130,9 @@ export default function Hero({ onSayHello }: HeroProps) {
       const baseRow = Math.floor(pxY / pixelSize);
 
       const colorPalette = [
-        "rgba(232, 176, 74, ", // amber
-        "rgba(245, 243, 239, ", // white
-        "rgba(56, 189, 248, ",  // cyan
+        "rgba(232, 176, 74, ",
+        "rgba(245, 243, 239, ",
+        "rgba(56, 189, 248, ",
         "rgba(232, 176, 74, ",
       ];
 
@@ -156,7 +156,6 @@ export default function Hero({ onSayHello }: HeroProps) {
         }
       }
 
-      // Keep max particles optimal for 120fps
       if (pixelsRef.current.length > 80) {
         pixelsRef.current.splice(0, pixelsRef.current.length - 80);
       }
@@ -164,7 +163,7 @@ export default function Hero({ onSayHello }: HeroProps) {
     [reduce]
   );
 
-  // Resize canvas to match display size
+  // Sync canvas size
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -200,7 +199,6 @@ export default function Hero({ onSayHello }: HeroProps) {
         ctx.fillStyle = `${p.color}${p.alpha.toFixed(2)})`;
         ctx.fillRect(p.x, p.y, p.size - 1, p.size - 1);
 
-        // Highlight border for hot pixels
         if (p.alpha > 0.6) {
           ctx.strokeStyle = `rgba(232, 176, 74, ${(p.alpha * 0.7).toFixed(2)})`;
           ctx.lineWidth = 1;
@@ -358,13 +356,13 @@ export default function Hero({ onSayHello }: HeroProps) {
 
                 {/* ID Card Top Bar: Serial & Smart Chip */}
                 <div className="mb-2.5 flex items-center justify-between px-1">
-                  {/* <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"> */}
-                    {/* <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> */}
-                    {/* <span>DEV ID // 2026</span> */}
-                  {/* </div> */}
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span>DEV ID // 2026</span>
+                  </div>
 
                   {/* Metallic Smart Card IC Chip */}
-                  {/* <div
+                  <div
                     title="Smart Card Microchip"
                     className="flex h-5 w-7 items-center justify-center rounded border border-amber-500/40 bg-gradient-to-br from-amber-500/25 via-yellow-600/15 to-amber-900/30 p-0.5 shadow-sm"
                   >
@@ -372,7 +370,7 @@ export default function Hero({ onSayHello }: HeroProps) {
                       <div className="border-r border-amber-400/25" />
                       <div />
                     </div>
-                  </div> */}
+                  </div>
                 </div>
 
                 {/* Portrait Photo Frame with Interactive Pixel Canvas */}
@@ -392,13 +390,13 @@ export default function Hero({ onSayHello }: HeroProps) {
                   {/* Soft natural film grain */}
                   <div className="grain-overlay pointer-events-none opacity-30" />
 
-                  {/* Interactive Pixel Canvas Overlay (Draws glowing pixels on hover) */}
+                  {/* Interactive Pixel Canvas Overlay */}
                   <canvas
                     ref={canvasRef}
                     className="pointer-events-none absolute inset-0 z-20 h-full w-full"
                   />
 
-                  {/* Holographic Pixel Mesh Texture (reveals softly on hover) */}
+                  {/* Holographic Pixel Mesh Texture */}
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-0 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-40"
