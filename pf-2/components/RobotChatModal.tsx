@@ -156,7 +156,7 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.97 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="relative z-10 h-[90svh] w-full max-w-[520px] overflow-hidden rounded-t-[28px] p-px shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)] sm:h-[660px] sm:rounded-[28px]"
+            className="relative z-10 h-[78svh] w-full max-w-[420px] overflow-hidden rounded-t-[24px] p-px shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)] sm:h-[540px] sm:rounded-[24px]"
           >
             <div className="absolute inset-0 bg-white/10" />
             {!reduce && (
@@ -172,7 +172,7 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
             )}
 
             {/* Panel */}
-            <div className="relative flex h-full flex-col overflow-hidden rounded-t-[27px] bg-[#0a0b0f] sm:rounded-[27px]">
+            <div className="relative flex h-full flex-col overflow-hidden rounded-t-[23px] bg-[#0a0b0f] sm:rounded-[23px]">
               {/* Ambient glow */}
               <div
                 aria-hidden="true"
@@ -267,13 +267,13 @@ export default function RobotChatModal({ isOpen, onClose }: RobotChatModalProps)
                     initial={reduce ? false : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25, duration: 0.5 }}
-                    className="grid grid-cols-2 gap-2.5 pt-2"
+                    className="grid grid-cols-2 gap-2 pt-1"
                   >
                     {SUGGESTIONS.map(({ icon: Icon, label, prompt }) => (
                       <button
                         key={label}
                         onClick={() => handleSend(prompt)}
-                        className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 text-left transition-all duration-300 hover:border-[#E8B04A]/50 hover:bg-white/[0.06]"
+                        className="group flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-left transition-all duration-300 hover:border-[#E8B04A]/50 hover:bg-white/[0.06]"
                       >
                         <Icon
                           size={16}
