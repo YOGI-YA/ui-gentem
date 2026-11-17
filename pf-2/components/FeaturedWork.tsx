@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import {
   AnimatePresence,
   motion,
-  useMotionValueEvent,
   useScroll,
-  useTransform,
 } from "framer-motion";
 import {
   ArrowUpRight,
@@ -16,6 +14,9 @@ import {
   ExternalLink,
   Github,
   Hand,
+  Pause,
+  Play,
+  RotateCw,
   X,
 } from "lucide-react";
 import { projects, type Project } from "@/lib/data";
@@ -177,8 +178,12 @@ function CaseStudyModal({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  FeaturedWork: Horizontal scroll section pinned to vertical scroll         */
+/*  FeaturedWork: Endless Infinite Looping Rotating Projects Ribbon           */
 /* -------------------------------------------------------------------------- */
+
+// 4 repeated sets to ensure continuous wrapping across any display width
+const REPEAT_COUNT = 4;
+const REPEATED_PROJECTS = Array.from({ length: REPEAT_COUNT }, () => projects).flat();
 
 export default function FeaturedWork() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -186,90 +191,160 @@ export default function FeaturedWork() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [modalProject, setModalProject] = useState<Project | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
 
-  // Responsive metrics for centering cards
+  // Responsive dimensions for precise modulo wrapping
   const [dims, setDims] = useState({
     cardWidth: 480,
     gap: 32,
-    paddingX: 380,
-    maxTranslate: 2400,
+    unitWidth: 512,
+    singleSetWidth: 512 * projects.length,
   });
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      const w = window.innerWidth;
-      const cardWidth = w < 640 ? 300 : w < 1024 ? 400 : 480;
-      const gap = w < 640 ? 16 : w < 1024 ? 24 : 32;
-      const paddingX = Math.max(20, (w - cardWidth) / 2);
-      const maxTranslate = (projects.length - 1) * (cardWidth + gap);
-      setDims({ cardWidth, gap, paddingX, maxTranslate });
-    };
-
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
+  const updateDims = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const w = window.innerWidth;
+    const cardWidth = w < 640 ? 300 : w < 1024 ? 400 : 480;
+    const gap = w < 640 ? 16 : w < 1024 ? 24 : 32;
+    const unitWidth = cardWidth + gap;
+    const singleSetWidth = unitWidth * projects.length;
+    setDims({ cardWidth, gap, unitWidth, singleSetWidth });
   }, []);
 
-  // Framer Motion scroll tracking over the tall pinned container
+  useEffect(() => {
+    updateDims();
+    window.addEventListener("resize", updateDims);
+    return () => window.removeEventListener("resize", updateDims);
+  }, [updateDims]);
+
+  // Infinite position state managed outside React render loop for 60fps
+  const offsetRef = useRef(0);
+  const targetOffsetRef = useRef(0);
+  const lastActiveIndexRef = useRef(0);
+  const rafIdRef = useRef<number | null>(null);
+
+  // Drag interaction state
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const dragStartOffsetRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+
+  // Vertical scroll progress tracking
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  // Map scroll progress to horizontal translation
-  const x = useTransform(scrollYProgress, [0, 1], [0, -dims.maxTranslate]);
+  const prevScrollYProgressRef = useRef(0);
 
-  // Synchronize active project index based on scroll position
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    const raw = latest * (projects.length - 1);
-    const clamped = Math.min(projects.length - 1, Math.max(0, Math.round(raw)));
-    setActiveIndex(clamped);
-  });
+  useEffect(() => {
+    const unsubscribe = scrollYProgress.on("change", (latest) => {
+      const delta = latest - prevScrollYProgressRef.current;
+      prevScrollYProgressRef.current = latest;
 
-  // Jump smoothly to any project index
-  const navigateToIndex = (targetIdx: number) => {
-    if (!containerRef.current) return;
-    const clamped = Math.max(0, Math.min(projects.length - 1, targetIdx));
-    const rect = containerRef.current.getBoundingClientRect();
-    const currentScrollY = window.scrollY;
-    const sectionTop = currentScrollY + rect.top;
-    const scrollRange = containerRef.current.offsetHeight - window.innerHeight;
-    const targetScrollY =
-      sectionTop + (clamped / (projects.length - 1)) * scrollRange;
-
-    window.scrollTo({
-      top: targetScrollY,
-      behavior: "smooth",
+      // Scroll down translates to forward carousel rotation
+      if (Math.abs(delta) > 0.0001 && dims.singleSetWidth > 0) {
+        const scrollRotationDelta = delta * dims.singleSetWidth * 2.2;
+        targetOffsetRef.current += scrollRotationDelta;
+      }
     });
-  };
 
-  // Drag-to-browse gesture support (mouse and touch drag drives vertical scroll)
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const startScrollYRef = useRef(0);
-  const dragDistanceRef = useRef(0);
+    return () => unsubscribe();
+  }, [scrollYProgress, dims.singleSetWidth]);
 
+  // Main 60fps animation tick: lerp smooth movement & seamless modulo wrapping
+  useEffect(() => {
+    let lastTime = performance.now();
+
+    const loop = (currentTime: number) => {
+      const dt = Math.min(32, currentTime - lastTime);
+      lastTime = currentTime;
+
+      // Subtle constant auto-drift when not paused or hovering
+      if (!isDraggingRef.current && autoPlay && !isHovered) {
+        targetOffsetRef.current += (dt / 16.667) * 0.45; // ~27px per second
+      }
+
+      // Smooth lerp towards target offset (spring-like response to scrolls/drags)
+      const diff = targetOffsetRef.current - offsetRef.current;
+      if (Math.abs(diff) > 0.05) {
+        offsetRef.current += diff * 0.12;
+      } else {
+        offsetRef.current = targetOffsetRef.current;
+      }
+
+      // Compute seamless modulo translation
+      if (trackRef.current && dims.singleSetWidth > 0 && typeof window !== "undefined") {
+        const singleSet = dims.singleSetWidth;
+        const wrapped = ((offsetRef.current % singleSet) + singleSet) % singleSet;
+
+        // Base offset centers Card 0 of Set 1 at window.innerWidth / 2
+        const viewportCenter = window.innerWidth / 2;
+        const baseOffset = viewportCenter - dims.cardWidth / 2 - 1 * singleSet;
+        const translateX = baseOffset - wrapped;
+
+        trackRef.current.style.transform = `translate3d(${translateX}px, 0, 0)`;
+
+        // Calculate which project is in the center
+        const rawIndex = Math.round(wrapped / dims.unitWidth) % projects.length;
+        const activeIdx = (rawIndex + projects.length) % projects.length;
+
+        if (activeIdx !== lastActiveIndexRef.current) {
+          lastActiveIndexRef.current = activeIdx;
+          setActiveIndex(activeIdx);
+        }
+      }
+
+      rafIdRef.current = requestAnimationFrame(loop);
+    };
+
+    rafIdRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, [autoPlay, isHovered, dims]);
+
+  // Rotate to target relative project index (infinite forward or backward)
+  const rotateToProject = useCallback(
+    (targetProjectIdx: number) => {
+      const currentIdx = lastActiveIndexRef.current;
+      let diff = targetProjectIdx - currentIdx;
+
+      // Find the shortest path around the circle
+      if (diff > projects.length / 2) diff -= projects.length;
+      if (diff < -projects.length / 2) diff += projects.length;
+
+      targetOffsetRef.current += diff * dims.unitWidth;
+    },
+    [dims.unitWidth]
+  );
+
+  // Next / Prev step navigation (infinite loop in both directions)
+  const stepNext = useCallback(() => {
+    targetOffsetRef.current += dims.unitWidth;
+  }, [dims.unitWidth]);
+
+  const stepPrev = useCallback(() => {
+    targetOffsetRef.current -= dims.unitWidth;
+  }, [dims.unitWidth]);
+
+  // Pointer drag handling for mouse and touch
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     isDraggingRef.current = true;
     startXRef.current = e.clientX;
-    startScrollYRef.current = window.scrollY;
+    dragStartOffsetRef.current = targetOffsetRef.current;
     dragDistanceRef.current = 0;
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingRef.current || !containerRef.current) return;
+    if (!isDraggingRef.current) return;
     const deltaX = e.clientX - startXRef.current;
     dragDistanceRef.current = Math.abs(deltaX);
-
-    const scrollRange = containerRef.current.offsetHeight - window.innerHeight;
-    if (dims.maxTranslate > 0 && scrollRange > 0) {
-      const scrollDelta = -(deltaX / dims.maxTranslate) * scrollRange;
-      window.scrollTo({
-        top: startScrollYRef.current + scrollDelta,
-        behavior: "auto",
-      });
-    }
+    // Drag left moves carousel forward, drag right moves backward
+    targetOffsetRef.current = dragStartOffsetRef.current - deltaX * 1.15;
   };
 
   const handlePointerUp = () => {
@@ -295,7 +370,9 @@ export default function FeaturedWork() {
       id="work"
       ref={containerRef}
       className="relative border-b border-border"
-      style={{ height: `${Math.max(300, projects.length * 65)}vh` }}
+      style={{ height: "420vh" }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Pinned Viewport Container */}
       <div className="sticky top-0 h-screen w-full overflow-hidden flex flex-col justify-between select-none">
@@ -303,7 +380,7 @@ export default function FeaturedWork() {
         <div
           className="pointer-events-none absolute inset-0 transition-all duration-700 -z-10 opacity-75"
           style={{
-            background: `radial-gradient(ellipse 75% 45% at 50% 28%, ${activeProject.accentColor}22, transparent 70%), #0a0a0a`,
+            background: `radial-gradient(ellipse 75% 45% at 50% 28%, ${activeProject.accentColor}24, transparent 70%), #0a0a0a`,
           }}
         />
 
@@ -323,50 +400,69 @@ export default function FeaturedWork() {
             </h2>
           </div>
 
-          {/* Project Slide Counter */}
-          <div className="hidden sm:flex items-center gap-3">
-            <span className="font-mono text-xs text-white/50 tracking-wider">
-              PROJECT
-            </span>
-            <span className="font-mono text-sm sm:text-base font-semibold text-white">
-              0{activeIndex + 1}
-              <span className="text-white/30 font-normal"> / 0{projects.length}</span>
-            </span>
+          {/* Project Indicator & Jump Dots */}
+          <div className="flex items-center gap-4">
+            {/* Quick jump dots */}
+            <div className="hidden md:flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
+              {projects.map((p, idx) => (
+                <button
+                  key={p.id}
+                  onClick={() => rotateToProject(idx)}
+                  aria-label={`Jump to ${p.title}`}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    idx === activeIndex
+                      ? "w-6 bg-white"
+                      : "w-2 bg-white/25 hover:bg-white/60"
+                  }`}
+                  style={{
+                    backgroundColor:
+                      idx === activeIndex ? p.accentColor : undefined,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Slide Counter */}
+            <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
+              <span className="font-mono text-xs text-white/50 tracking-wider">
+                PROJECT
+              </span>
+              <span className="font-mono text-sm font-semibold text-white">
+                0{activeIndex + 1}
+                <span className="text-white/30 font-normal"> / 0{projects.length}</span>
+              </span>
+            </div>
           </div>
         </div>
 
         {/* ------------------------------------------------------------------ */}
-        {/* HORIZONTAL CARDS RIBBON (SCROLLS LEFT TO RIGHT ON SCROLL DOWN)      */}
+        {/* HORIZONTAL INFINITE CARDS TRACK (NEVER-ENDING ROTATION)             */}
         {/* ------------------------------------------------------------------ */}
         <div
-          className="relative w-full overflow-hidden py-3 sm:py-5 cursor-grab active:cursor-grabbing z-10"
+          className="relative w-full overflow-hidden py-4 sm:py-6 cursor-grab active:cursor-grabbing z-10"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
         >
-          <motion.div
+          <div
             ref={trackRef}
-            style={{ x }}
-            className="flex items-center"
+            className="flex items-center will-change-transform"
           >
-            {/* Left padding spacer so first card starts centered */}
-            <div
-              style={{ width: `${dims.paddingX}px`, flexShrink: 0 }}
-              aria-hidden="true"
-            />
-
-            {/* Project Cards */}
-            {projects.map((project, idx) => {
-              const isActive = idx === activeIndex;
+            {REPEATED_PROJECTS.map((project, idx) => {
+              const projectIndexInCatalog = idx % projects.length;
+              const isCenterActive = projectIndexInCatalog === activeIndex;
 
               return (
                 <div
-                  key={project.id}
+                  key={`${project.id}-${idx}`}
                   onClick={() => {
-                    // Only navigate if not a large drag
                     if (dragDistanceRef.current < 8) {
-                      navigateToIndex(idx);
+                      if (isCenterActive) {
+                        setModalProject(project);
+                      } else {
+                        rotateToProject(projectIndexInCatalog);
+                      }
                     }
                   }}
                   style={{
@@ -374,17 +470,17 @@ export default function FeaturedWork() {
                     marginRight: `${dims.gap}px`,
                     flexShrink: 0,
                   }}
-                  className="group flex flex-col items-center cursor-pointer transition-transform duration-300"
+                  className="group flex flex-col items-center cursor-pointer select-none"
                 >
                   {/* Card Shell */}
                   <div
                     className={`relative w-full aspect-[16/10] overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-500 ${
-                      isActive
+                      isCenterActive
                         ? "scale-100 opacity-100 border-white/40 shadow-2xl"
                         : "scale-[0.92] opacity-55 hover:opacity-85 hover:scale-[0.96] border-white/10"
                     }`}
                     style={{
-                      boxShadow: isActive
+                      boxShadow: isCenterActive
                         ? `0 24px 60px -15px ${project.accentColor}44, 0 0 25px -5px ${project.accentColor}33`
                         : "0 10px 30px rgba(0,0,0,0.5)",
                     }}
@@ -394,9 +490,9 @@ export default function FeaturedWork() {
                       src={project.image}
                       alt={project.title}
                       fill
-                      sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 500px"
+                      sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 480px"
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      priority={idx === 0 || idx === 1}
+                      priority={idx < 8}
                     />
 
                     {/* Gradient Overlay */}
@@ -413,7 +509,7 @@ export default function FeaturedWork() {
 
                     <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
                       <span className="font-mono text-[10px] sm:text-xs text-white/60 bg-black/50 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md">
-                        0{idx + 1}
+                        0{projectIndexInCatalog + 1}
                       </span>
                     </div>
                   </div>
@@ -421,7 +517,7 @@ export default function FeaturedWork() {
                   {/* Card Title underneath (Direct reference to video design) */}
                   <p
                     className={`mt-3.5 text-center text-sm sm:text-base font-semibold tracking-wide transition-all duration-300 ${
-                      isActive
+                      isCenterActive
                         ? "text-white scale-105"
                         : "text-white/50 group-hover:text-white/80"
                     }`}
@@ -431,13 +527,7 @@ export default function FeaturedWork() {
                 </div>
               );
             })}
-
-            {/* Right padding spacer so last card ends centered */}
-            <div
-              style={{ width: `${dims.paddingX}px`, flexShrink: 0 }}
-              aria-hidden="true"
-            />
-          </motion.div>
+          </div>
         </div>
 
         {/* ------------------------------------------------------------------ */}
@@ -556,28 +646,43 @@ export default function FeaturedWork() {
             </AnimatePresence>
           </div>
 
-          {/* Bottom Bar: Drag Hint & Navigation Controls */}
+          {/* Bottom Bar: Infinite Controls, AutoPlay Toggle & Drag Hint */}
           <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-white/60 backdrop-blur-md">
-              <Hand size={12} className="text-white/70 animate-pulse" />
-              <span>DRAG TO BROWSE</span>
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-white/60 backdrop-blur-md">
+                <Hand size={12} className="text-white/70 animate-pulse" />
+                <span>DRAG TO BROWSE</span>
+              </div>
+
+              {/* Auto-Rotation Toggle */}
+              <button
+                onClick={() => setAutoPlay((prev) => !prev)}
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-white/60 hover:text-white transition-colors backdrop-blur-md"
+              >
+                <RotateCw
+                  size={10}
+                  className={autoPlay && !isHovered ? "animate-spin text-emerald-400" : ""}
+                  style={{ animationDuration: "4s" }}
+                />
+                {autoPlay ? <Pause size={10} /> : <Play size={10} />}
+                <span>{autoPlay ? "Auto-Flow" : "Paused"}</span>
+              </button>
             </div>
 
+            {/* Infinite Prev / Next Buttons (Never disabled) */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => navigateToIndex(activeIndex - 1)}
-                disabled={activeIndex === 0}
-                aria-label="Previous project"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-90"
+                onClick={stepPrev}
+                aria-label="Previous project (infinite loop)"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-90"
               >
                 <ChevronLeft size={15} />
               </button>
 
               <button
-                onClick={() => navigateToIndex(activeIndex + 1)}
-                disabled={activeIndex === projects.length - 1}
-                aria-label="Next project"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-90"
+                onClick={stepNext}
+                aria-label="Next project (infinite loop)"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-90"
               >
                 <ChevronRight size={15} />
               </button>
