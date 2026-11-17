@@ -22,7 +22,7 @@ import {
 import { projects, type Project } from "@/lib/data";
 
 /* -------------------------------------------------------------------------- */
-/*  CaseStudyModal: In-depth project breakdown modal                          */
+/*  CaseStudyModal: Clean project breakdown modal (no release/numeric clutter)*/
 /* -------------------------------------------------------------------------- */
 
 function CaseStudyModal({
@@ -60,16 +60,18 @@ function CaseStudyModal({
               <X size={18} />
             </button>
 
-            {/* Category / Year */}
-            <div className="flex items-center gap-2 sm:gap-3 pr-10">
+            {/* Category */}
+            <div className="flex items-center gap-2 pr-10">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: project.accentColor || "#E8B04A" }}
+              />
               <span className="font-mono text-xs tracking-[0.2em] text-[#E8B04A] uppercase">
                 {project.category}
               </span>
-              <span className="text-xs text-muted/60">•</span>
-              <span className="font-mono text-xs text-muted">{project.year}</span>
             </div>
 
-            {/* Title */}
+            {/* Title & Client */}
             <h3 className="mt-3 text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight pr-10 text-white">
               {project.title}
             </h3>
@@ -87,7 +89,7 @@ function CaseStudyModal({
               ))}
             </div>
 
-            {/* Metrics cards if present */}
+            {/* Metrics cards */}
             {project.metrics && project.metrics.length > 0 && (
               <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4 rounded-xl border border-border bg-background-soft p-3 sm:p-4">
                 {project.metrics.map((m) => (
@@ -178,28 +180,31 @@ function CaseStudyModal({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  FeaturedWork: Endless Infinite Looping Rotating Projects Ribbon           */
+/*  FeaturedWork: Curvy Infinite-Rotation Ribbon (Clean, No Release/Numbers)  */
 /* -------------------------------------------------------------------------- */
 
-// 4 repeated sets to ensure continuous wrapping across any display width
+// 4 repeated sets to ensure seamless infinite looping without edge boundaries
 const REPEAT_COUNT = 4;
 const REPEATED_PROJECTS = Array.from({ length: REPEAT_COUNT }, () => projects).flat();
 
 export default function FeaturedWork() {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
 
-  // Responsive dimensions for precise modulo wrapping
+  // Responsive metrics for the curve and centering
   const [dims, setDims] = useState({
     cardWidth: 480,
     gap: 32,
     unitWidth: 512,
     singleSetWidth: 512 * projects.length,
+    maxArcY: 48,
+    maxTilt: 6.0,
   });
 
   const updateDims = useCallback(() => {
@@ -209,7 +214,9 @@ export default function FeaturedWork() {
     const gap = w < 640 ? 16 : w < 1024 ? 24 : 32;
     const unitWidth = cardWidth + gap;
     const singleSetWidth = unitWidth * projects.length;
-    setDims({ cardWidth, gap, unitWidth, singleSetWidth });
+    const maxArcY = w < 640 ? 28 : w < 1024 ? 38 : 48;
+    const maxTilt = w < 640 ? 4.0 : 6.0;
+    setDims({ cardWidth, gap, unitWidth, singleSetWidth, maxArcY, maxTilt });
   }, []);
 
   useEffect(() => {
@@ -218,7 +225,7 @@ export default function FeaturedWork() {
     return () => window.removeEventListener("resize", updateDims);
   }, [updateDims]);
 
-  // Infinite position state managed outside React render loop for 60fps
+  // Infinite position state managed outside React render loop for 60fps/120fps
   const offsetRef = useRef(0);
   const targetOffsetRef = useRef(0);
   const lastActiveIndexRef = useRef(0);
@@ -243,7 +250,7 @@ export default function FeaturedWork() {
       const delta = latest - prevScrollYProgressRef.current;
       prevScrollYProgressRef.current = latest;
 
-      // Scroll down translates to forward carousel rotation
+      // Vertical scroll smoothly rotates the carousel forward
       if (Math.abs(delta) > 0.0001 && dims.singleSetWidth > 0) {
         const scrollRotationDelta = delta * dims.singleSetWidth * 2.2;
         targetOffsetRef.current += scrollRotationDelta;
@@ -253,7 +260,7 @@ export default function FeaturedWork() {
     return () => unsubscribe();
   }, [scrollYProgress, dims.singleSetWidth]);
 
-  // Main 60fps animation tick: lerp smooth movement & seamless modulo wrapping
+  // Main 60fps animation tick: lerp smooth movement & apply parabolic curve per card
   useEffect(() => {
     let lastTime = performance.now();
 
@@ -266,7 +273,7 @@ export default function FeaturedWork() {
         targetOffsetRef.current += (dt / 16.667) * 0.45; // ~27px per second
       }
 
-      // Smooth lerp towards target offset (spring-like response to scrolls/drags)
+      // Smooth lerp towards target offset
       const diff = targetOffsetRef.current - offsetRef.current;
       if (Math.abs(diff) > 0.05) {
         offsetRef.current += diff * 0.12;
@@ -284,9 +291,31 @@ export default function FeaturedWork() {
         const baseOffset = viewportCenter - dims.cardWidth / 2 - 1 * singleSet;
         const translateX = baseOffset - wrapped;
 
+        // Translate the track horizontally
         trackRef.current.style.transform = `translate3d(${translateX}px, 0, 0)`;
 
-        // Calculate which project is in the center
+        // Apply parabolic arc and 3D tilt curve to every individual card
+        cardRefs.current.forEach((cardEl, idx) => {
+          if (!cardEl) return;
+          const cardCenterX = translateX + idx * dims.unitWidth + dims.cardWidth / 2;
+          const normDist = (cardCenterX - viewportCenter) / (viewportCenter || 1);
+
+          // Parabolic downward curve: center is peak elevation (y=0), edges curve downward
+          const yShift = Math.pow(normDist, 2) * dims.maxArcY;
+          // Tangent tilt angle along curve
+          const tiltZ = normDist * dims.maxTilt;
+          // Cylindrical perspective rotation
+          const rotateY = -normDist * 6.5;
+          // Smooth scale falloff away from center
+          const scale = 1.04 - Math.min(0.2, Math.pow(normDist, 2) * 0.12);
+          // Opacity falloff at distant edges
+          const opacity = 1.0 - Math.min(0.5, Math.abs(normDist) * 0.28);
+
+          cardEl.style.transform = `translate3d(0, ${yShift}px, 0) rotateZ(${tiltZ}deg) rotateY(${rotateY}deg) scale(${scale})`;
+          cardEl.style.opacity = `${opacity}`;
+        });
+
+        // Calculate which project is centered
         const rawIndex = Math.round(wrapped / dims.unitWidth) % projects.length;
         const activeIdx = (rawIndex + projects.length) % projects.length;
 
@@ -306,13 +335,12 @@ export default function FeaturedWork() {
     };
   }, [autoPlay, isHovered, dims]);
 
-  // Rotate to target relative project index (infinite forward or backward)
+  // Rotate smoothly to any relative project index along the shortest path
   const rotateToProject = useCallback(
     (targetProjectIdx: number) => {
       const currentIdx = lastActiveIndexRef.current;
       let diff = targetProjectIdx - currentIdx;
 
-      // Find the shortest path around the circle
       if (diff > projects.length / 2) diff -= projects.length;
       if (diff < -projects.length / 2) diff += projects.length;
 
@@ -343,7 +371,6 @@ export default function FeaturedWork() {
     if (!isDraggingRef.current) return;
     const deltaX = e.clientX - startXRef.current;
     dragDistanceRef.current = Math.abs(deltaX);
-    // Drag left moves carousel forward, drag right moves backward
     targetOffsetRef.current = dragStartOffsetRef.current - deltaX * 1.15;
   };
 
@@ -385,14 +412,14 @@ export default function FeaturedWork() {
         />
 
         {/* ------------------------------------------------------------------ */}
-        {/* TOP HEADER BAR                                                      */}
+        {/* TOP HEADER BAR (CLEAN, NO NUMERIC LABELS)                           */}
         {/* ------------------------------------------------------------------ */}
         <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-8 md:px-12 pt-6 sm:pt-8 md:pt-10 flex items-center justify-between z-20">
           <div>
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[#E8B04A] animate-pulse" />
               <p className="font-mono text-xs tracking-[0.3em] text-[#E8B04A] uppercase">
-                03 // SELECTED WORK
+                SELECTED WORK
               </p>
             </div>
             <h2 className="mt-1 text-2xl sm:text-3xl md:text-4xl font-medium tracking-tight text-white">
@@ -400,46 +427,33 @@ export default function FeaturedWork() {
             </h2>
           </div>
 
-          {/* Project Indicator & Jump Dots */}
-          <div className="flex items-center gap-4">
-            {/* Quick jump dots */}
-            <div className="hidden md:flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
-              {projects.map((p, idx) => (
-                <button
-                  key={p.id}
-                  onClick={() => rotateToProject(idx)}
-                  aria-label={`Jump to ${p.title}`}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    idx === activeIndex
-                      ? "w-6 bg-white"
-                      : "w-2 bg-white/25 hover:bg-white/60"
-                  }`}
-                  style={{
-                    backgroundColor:
-                      idx === activeIndex ? p.accentColor : undefined,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Slide Counter */}
-            <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
-              <span className="font-mono text-xs text-white/50 tracking-wider">
-                PROJECT
-              </span>
-              <span className="font-mono text-sm font-semibold text-white">
-                0{activeIndex + 1}
-                <span className="text-white/30 font-normal"> / 0{projects.length}</span>
-              </span>
-            </div>
+          {/* Quick jump dots (Clean visual indicator, no numbers) */}
+          <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full backdrop-blur-md">
+            {projects.map((p, idx) => (
+              <button
+                key={p.id}
+                onClick={() => rotateToProject(idx)}
+                aria-label={`Jump to ${p.title}`}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  idx === activeIndex
+                    ? "w-6 bg-white"
+                    : "w-2 bg-white/25 hover:bg-white/60"
+                }`}
+                style={{
+                  backgroundColor:
+                    idx === activeIndex ? p.accentColor : undefined,
+                }}
+              />
+            ))}
           </div>
         </div>
 
         {/* ------------------------------------------------------------------ */}
-        {/* HORIZONTAL INFINITE CARDS TRACK (NEVER-ENDING ROTATION)             */}
+        {/* CURVY HORIZONTAL CARDS TRACK (ARCHED, NO LABELS/NUMBERS)           */}
         {/* ------------------------------------------------------------------ */}
         <div
-          className="relative w-full overflow-hidden py-4 sm:py-6 cursor-grab active:cursor-grabbing z-10"
+          className="relative w-full overflow-hidden py-6 sm:py-10 cursor-grab active:cursor-grabbing z-10"
+          style={{ perspective: "1400px" }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -448,6 +462,7 @@ export default function FeaturedWork() {
           <div
             ref={trackRef}
             className="flex items-center will-change-transform"
+            style={{ transformStyle: "preserve-3d" }}
           >
             {REPEATED_PROJECTS.map((project, idx) => {
               const projectIndexInCatalog = idx % projects.length;
@@ -456,6 +471,9 @@ export default function FeaturedWork() {
               return (
                 <div
                   key={`${project.id}-${idx}`}
+                  ref={(el) => {
+                    cardRefs.current[idx] = el;
+                  }}
                   onClick={() => {
                     if (dragDistanceRef.current < 8) {
                       if (isCenterActive) {
@@ -469,15 +487,17 @@ export default function FeaturedWork() {
                     width: `${dims.cardWidth}px`,
                     marginRight: `${dims.gap}px`,
                     flexShrink: 0,
+                    transformOrigin: "center 85%",
+                    willChange: "transform, opacity",
                   }}
-                  className="group flex flex-col items-center cursor-pointer select-none"
+                  className="group flex flex-col items-center cursor-pointer select-none transition-shadow duration-300"
                 >
-                  {/* Card Shell */}
+                  {/* Card Shell - Clean rounded visual: NO release tags, NO numbers */}
                   <div
-                    className={`relative w-full aspect-[16/10] overflow-hidden rounded-2xl sm:rounded-3xl border transition-all duration-500 ${
+                    className={`relative w-full aspect-[16/10] overflow-hidden rounded-2xl sm:rounded-3xl border transition-colors duration-500 ${
                       isCenterActive
-                        ? "scale-100 opacity-100 border-white/40 shadow-2xl"
-                        : "scale-[0.92] opacity-55 hover:opacity-85 hover:scale-[0.96] border-white/10"
+                        ? "border-white/40 shadow-2xl"
+                        : "border-white/10 group-hover:border-white/25"
                     }`}
                     style={{
                       boxShadow: isCenterActive
@@ -495,30 +515,15 @@ export default function FeaturedWork() {
                       priority={idx < 8}
                     />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
-
-                    {/* Top inside card badge */}
-                    <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 rounded-full border border-white/20 bg-black/60 px-2.5 py-1 text-[10px] sm:text-xs font-mono uppercase tracking-wider text-white/90 backdrop-blur-md">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ backgroundColor: project.accentColor || "#10b981" }}
-                      />
-                      <span>{project.status}</span>
-                    </div>
-
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
-                      <span className="font-mono text-[10px] sm:text-xs text-white/60 bg-black/50 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-md">
-                        0{projectIndexInCatalog + 1}
-                      </span>
-                    </div>
+                    {/* Gradient Overlay for high-contrast presentation */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
                   </div>
 
-                  {/* Card Title underneath (Direct reference to video design) */}
+                  {/* Card Title underneath (Direct match with reference video) */}
                   <p
                     className={`mt-3.5 text-center text-sm sm:text-base font-semibold tracking-wide transition-all duration-300 ${
                       isCenterActive
-                        ? "text-white scale-105"
+                        ? "text-white"
                         : "text-white/50 group-hover:text-white/80"
                     }`}
                   >
@@ -546,17 +551,13 @@ export default function FeaturedWork() {
               >
                 {/* Left Column: Category, Headline & Buttons */}
                 <div className="lg:col-span-7">
-                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 font-mono text-[10px] sm:text-xs text-white/90 backdrop-blur-md">
                       <span
                         className="h-1.5 w-1.5 rounded-full"
                         style={{ backgroundColor: activeProject.accentColor }}
                       />
                       {activeProject.category}
-                    </span>
-                    <span className="text-white/40 text-xs hidden sm:inline">•</span>
-                    <span className="font-mono text-xs text-white/60">
-                      {activeProject.year}
                     </span>
                   </div>
 
@@ -669,11 +670,11 @@ export default function FeaturedWork() {
               </button>
             </div>
 
-            {/* Infinite Prev / Next Buttons (Never disabled) */}
+            {/* Infinite Prev / Next Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={stepPrev}
-                aria-label="Previous project (infinite loop)"
+                aria-label="Previous project"
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-90"
               >
                 <ChevronLeft size={15} />
@@ -681,7 +682,7 @@ export default function FeaturedWork() {
 
               <button
                 onClick={stepNext}
-                aria-label="Next project (infinite loop)"
+                aria-label="Next project"
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-90"
               >
                 <ChevronRight size={15} />
