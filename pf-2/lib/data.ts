@@ -120,182 +120,223 @@ export type Project = {
   githubUrl?: string;
 };
 
-export const projects: Project[] = [
-  {
-    id: "graa-ai",
-    title: "Graa AI",
-    client: "Autonomous Multi-Agent Intelligence",
-    year: "2025 – 2026",
-    category: "AI Systems · Full-Stack",
-    filterCategory: "ai",
-    status: "Live in Production",
-    accentColor: "#10b981",
-    gradient: "from-emerald-500/20 via-teal-500/10 to-transparent",
-    metrics: [
-      { label: "Query Latency", value: "<100ms" },
-      { label: "Pipeline", value: "Multi-Agent" },
-      { label: "Vector Search", value: "Hybrid RAG" },
-    ],
-    stack: ["Next.js 15", "TypeScript", "AI Agents", "Vector DB", "TailwindCSS"],
-    image:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "An autonomous multi-agent intelligence platform designed for real-time semantic research, hybrid RAG retrieval, and high-velocity reasoning workflows.",
-    details: [
-      "Autonomous multi-agent orchestration pipeline with real-time streaming responses",
-      "Hybrid search and RAG architecture for context-accurate knowledge synthesis",
-      "High-fidelity dark mode interface with sub-100ms interaction latency",
-      "Scalable edge-deployed API backend with rate-limiting and token budgeting",
-    ],
-    liveUrl: "https://pf-27.vercel.app/case-studies/graa-ai",
-    githubUrl: "https://github.com/yogi-ya",
-  },
-  {
-    id: "ai-ebook",
-    title: "AI E-Book Generator",
-    client: "Automated Knowledge Synthesis",
-    year: "2025",
-    category: "AI Product · Publishing Engine",
-    filterCategory: "ai",
-    status: "Active Release",
-    accentColor: "#8b5cf6",
-    gradient: "from-purple-500/20 via-indigo-500/10 to-transparent",
-    metrics: [
-      { label: "Synthesis Rate", value: "10k+ Pgs" },
-      { label: "Context Window", value: "128k Tokens" },
-      { label: "Formats", value: "PDF & ePub" },
-    ],
-    stack: ["Next.js", "React", "TypeScript", "LLM Workflows", "Node.js"],
-    image:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "End-to-end publishing engine that transforms unstructured topic outlines into structured, publication-ready e-books with automated chapter drafting and styling.",
-    details: [
-      "Chapter-by-chapter coherent generation with long-context memory management",
-      "Automated typography layout styling, table of contents, and PDF/ePub export",
-      "Interactive editor with live prompt-assisted rewrites and precision refining",
-      "Engineered prompt chains ensuring tone consistency and factual integrity",
-    ],
-    liveUrl: "https://pf-27.vercel.app/case-studies/ai-ebook",
-    githubUrl: "https://github.com/yogi-ya",
-  },
-  {
-    id: "photo-vault",
-    title: "Photo Vault",
-    client: "Zero-Knowledge Media Security",
-    year: "2024 – 2025",
-    category: "Security · Web Application",
-    filterCategory: "security",
-    status: "Enterprise Ready",
-    accentColor: "#06b6d4",
-    gradient: "from-cyan-500/20 via-blue-500/10 to-transparent",
-    metrics: [
-      { label: "Encryption", value: "AES-GCM 256" },
-      { label: "Bandwidth Cut", value: "-45%" },
-      { label: "Server Knowledge", value: "0% Zero-Logs" },
-    ],
-    stack: ["React", "TypeScript", "Web Crypto API", "Cloud Storage", "PostgreSQL"],
-    image:
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "Privacy-first encrypted media vault engineered with client-side zero-knowledge encryption and seamless asset management.",
-    details: [
-      "Client-side AES-GCM 256-bit encryption before upload for absolute user privacy",
-      "Dynamic thumbnail generation and encrypted streaming media pipeline",
-      "Granular access control, biometric passkey support, and zero server logging",
-      "Optimized client-side image compression reducing bandwidth overhead by 45%",
-    ],
-    liveUrl: "https://pf-27.vercel.app/case-studies/photo-vault",
-    githubUrl: "https://github.com/yogi-ya",
-  },
-  {
-    id: "nexus-core",
-    title: "Nexus Developer Engine",
-    client: "Open Source Tooling & Architecture",
-    year: "2024",
-    category: "Dev Tools · Architecture",
-    filterCategory: "devtools",
-    status: "Open Source",
-    accentColor: "#f59e0b",
-    gradient: "from-amber-500/20 via-orange-500/10 to-transparent",
-    metrics: [
-      { label: "Type Safety", value: "Strict 100%" },
-      { label: "Bundle Overhead", value: "0 kB Runtime" },
-      { label: "DX Velocity", value: "3x Faster" },
-    ],
-    stack: ["Next.js", "TypeScript", "TailwindCSS", "PostgreSQL", "Prisma"],
-    image:
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "A modular, type-safe developer toolkit and component ecosystem for rapidly scaffolding modern, high-speed applications.",
-    details: [
-      "Unified design token architecture with automated accessibility audits",
-      "Type-safe API integrations and automated schema generation",
-      "Built-in telemetry, error tracking, and performance monitoring",
-      "Adopted by developer teams for accelerated MVP delivery",
-    ],
-    githubUrl: "https://github.com/yogi-ya",
-  },
-  {
-    id: "pulse-voice",
-    title: "Pulse Voice AI",
-    client: "Conversational Audio Infrastructure",
-    year: "2025 – 2026",
-    category: "AI Systems · WebRTC",
-    filterCategory: "ai",
-    status: "Beta Release",
-    accentColor: "#ec4899",
-    gradient: "from-pink-500/20 via-rose-500/10 to-transparent",
-    metrics: [
-      { label: "Voice Latency", value: "<180ms" },
-      { label: "Protocol", value: "WebRTC Data" },
-      { label: "Accuracy", value: "99.4%" },
-    ],
-    stack: ["WebRTC", "Next.js", "Python", "Whisper", "FastAPI"],
-    image:
-      "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "A real-time bidirectional voice agent pipeline with sub-180ms round-trip latency, streaming speech synthesis, and live tool orchestration.",
-    details: [
-      "Ultra-low latency audio streaming over WebRTC with client-side VAD (Voice Activity Detection)",
-      "Streaming neural speech-to-text pipeline coupled with parallel LLM token dispatch",
-      "Dynamic background noise cancellation and interruptible turn-taking prediction",
-      "Robust state machine handling live tool invocation and webhook synchronization",
-    ],
-    liveUrl: "https://pf-27.vercel.app/case-studies/pulse-voice",
-    githubUrl: "https://github.com/yogi-ya",
-  },
-  {
-    id: "sentinel-cloud",
-    title: "Sentinel IAM",
-    client: "Zero-Trust Cloud Governance",
-    year: "2024 – 2025",
-    category: "Dev Tools · Security",
-    filterCategory: "security",
-    status: "Enterprise Ready",
-    accentColor: "#3b82f6",
-    gradient: "from-blue-500/20 via-indigo-500/10 to-transparent",
-    metrics: [
-      { label: "Scan Velocity", value: "10k Assets/s" },
-      { label: "Coverage", value: "Multi-Cloud" },
-      { label: "False Positives", value: "<0.1%" },
-    ],
-    stack: ["Next.js", "TypeScript", "PostgreSQL", "Docker", "TailwindCSS"],
-    image:
-      "https://images.unsplash.com/photo-1563986768609-322da13575f3?q=80&w=1800&auto=format&fit=crop",
-    summary:
-      "An automated cloud entitlement governance platform that visualizes complex IAM permission graphs, identifies toxic combinations, and suggests least-privilege policies.",
-    details: [
-      "Graph-based permission analyzer discovering dormant credentials and excessive permissions",
-      "Automated one-click remediation pull requests generating least-privilege policies",
-      "SOC2, ISO27001, and HIPAA compliance report generation and posture auditing",
-      "High-throughput event stream ingestion processing multi-cloud telemetry in real-time",
-    ],
-    liveUrl: "https://pf-27.vercel.app/case-studies/sentinel-cloud",
-    githubUrl: "https://github.com/yogi-ya",
-  },
-];
-
+export const projects: Project[] = [
+  {
+    "id": "graa-ai",
+    "title": "Graa AI",
+    "client": "Autonomous AI Learning Platform",
+    "year": "2025 – 2026",
+    "category": "AI Systems · Full-Stack",
+    "filterCategory": "ai",
+    "status": "Live in Production",
+    "accentColor": "#10b981",
+    "gradient": "from-emerald-500/20 via-teal-500/10 to-transparent",
+    "metrics": [
+      {
+        "label": "Engine",
+        "value": "Multi-Tier AI"
+      },
+      {
+        "label": "Tutoring",
+        "value": "Context RAG"
+      },
+      {
+        "label": "Stack",
+        "value": "Next.js + Prisma"
+      }
+    ],
+    "stack": [
+      "Next.js",
+      "TypeScript",
+      "PostgreSQL",
+      "Prisma",
+      "RAG",
+      "TailwindCSS"
+    ],
+    "image": "/project/graaai.png",
+    "summary": "An open-source, full-stack autonomous learning platform that converts learning goals, syllabi, or academic textbooks into structured, day-by-day mastery roadmaps with active-recall quizzes, an interactive code sandbox, and RAG tutoring.",
+    "details": [
+      "Autonomous multi-tier AI inference engine generating personalized daily mastery roadmaps",
+      "Context-grounded RAG tutoring engine with milestone progression and automated active-recall quizzes",
+      "Integrated interactive code sandbox with live in-browser execution and feedback",
+      "Full-stack Next.js, TypeScript, PostgreSQL, and Prisma architecture deployed on Vercel"
+    ],
+    "liveUrl": "https://graaai.vercel.app/",
+    "githubUrl": "https://github.com/YOGI-YA/graa-ai"
+  },
+  {
+    "id": "web3-image-storage",
+    "title": "Web3 Image Storage",
+    "client": "Decentralized IPFS Media Architecture",
+    "year": "2025",
+    "category": "Web3 · Decentralized Media",
+    "filterCategory": "security",
+    "status": "Live in Production",
+    "accentColor": "#06b6d4",
+    "gradient": "from-cyan-500/20 via-blue-500/10 to-transparent",
+    "metrics": [
+      {
+        "label": "Storage",
+        "value": "IPFS via Pinata"
+      },
+      {
+        "label": "Database",
+        "value": "MongoDB Index"
+      },
+      {
+        "label": "Integrity",
+        "value": "Tamper-Proof"
+      }
+    ],
+    "stack": [
+      "React",
+      "Node.js",
+      "Express",
+      "MongoDB",
+      "IPFS",
+      "Pinata"
+    ],
+    "image": "/project/photovault.png",
+    "summary": "A decentralized image upload and retrieval application built with React, Node.js, Express, MongoDB, and Pinata. Allows users to upload images securely using IPFS with immutable cryptographic hashes and clean metadata retrieval.",
+    "details": [
+      "Decentralized file upload pipeline committing immutable media to IPFS via Pinata API",
+      "Scalable Node.js & Express REST backend managing metadata indexing and fast lookup in MongoDB",
+      "Modern React + Vite frontend with real-time file preview, status feedback, and responsive gallery",
+      "Zero server-side image retention guaranteeing decentralized ownership and tamper-proof storage"
+    ],
+    "liveUrl": "https://web3-image-storage.vercel.app/",
+    "githubUrl": "https://github.com/YogenderVermaa/Web3-Image-storage"
+  },
+  {
+    "id": "ebook-studio",
+    "title": "E-Book Studio",
+    "client": "AI-Assisted Publishing & Outline Engine",
+    "year": "2025",
+    "category": "AI Product · Publishing Engine",
+    "filterCategory": "ai",
+    "status": "Live in Production",
+    "accentColor": "#8b5cf6",
+    "gradient": "from-purple-500/20 via-indigo-500/10 to-transparent",
+    "metrics": [
+      {
+        "label": "Architecture",
+        "value": "pnpm Workspaces"
+      },
+      {
+        "label": "Output",
+        "value": "Digital E-Books"
+      },
+      {
+        "label": "Runtime",
+        "value": "React + Node.js"
+      }
+    ],
+    "stack": [
+      "React",
+      "Node.js",
+      "Express",
+      "TailwindCSS",
+      "pnpm",
+      "JavaScript"
+    ],
+    "image": "/project/lifelog.png",
+    "summary": "A platform where creators shape thoughts and brainstormed outlines into structured, publication-ready digital e-books. Features chapter drafting, interactive outline structuring, and streamlined publishing workflows.",
+    "details": [
+      "End-to-end authoring platform turning brainstormed outlines into structured, publication-ready chapters",
+      "Decoupled monorepo architecture engineered with pnpm workspaces for frontend and backend",
+      "Interactive rich-text chapter editor with real-time styling, table of contents, and drafting tools",
+      "Designed for rapid digital book generation with responsive preview across desktop and tablet"
+    ],
+    "liveUrl": "https://e-book-drab.vercel.app/",
+    "githubUrl": "https://github.com/YogenderVermaa/E-Book"
+  },
+  {
+    "id": "ehr-blockchain",
+    "title": "EHR Blockchain",
+    "client": "Verifiable Health Record Architecture",
+    "year": "2025 – 2026",
+    "category": "Blockchain · Healthcare Security",
+    "filterCategory": "security",
+    "status": "Under Development",
+    "accentColor": "#3b82f6",
+    "gradient": "from-blue-500/20 via-indigo-500/10 to-transparent",
+    "metrics": [
+      {
+        "label": "Ledger",
+        "value": "Smart Contracts"
+      },
+      {
+        "label": "Architecture",
+        "value": "TypeScript Monorepo"
+      },
+      {
+        "label": "Privacy",
+        "value": "Granular Consent"
+      }
+    ],
+    "stack": [
+      "TypeScript",
+      "Blockchain",
+      "Smart Contracts",
+      "Node.js",
+      "Cryptography",
+      "pnpm"
+    ],
+    "image": "/project/ehr-blockchain.jpg",
+    "summary": "A blockchain-based architectural blueprint and practical implementation for verifiable, auditable, and controlled electronic health record (EHR) sharing across medical providers using distributed ledger technology.",
+    "details": [
+      "Decentralized smart contract architecture enforcing granular, patient-consented record access control",
+      "Tamper-proof cryptographic audit logs tracking all provider read and update transactions",
+      "Full-stack TypeScript monorepo with dedicated provider node APIs and patient access portals",
+      "Designed around healthcare interoperability standards to ensure privacy, integrity, and compliance"
+    ],
+    "githubUrl": "https://github.com/YOGI-YA/EHR-Blockchain"
+  },
+  {
+    "id": "quickshot-ai",
+    "title": "Quickshot.ai",
+    "client": "Anonymous Ephemeral Communication",
+    "year": "2025 – 2026",
+    "category": "Security · Real-Time Systems",
+    "filterCategory": "security",
+    "status": "Under Development",
+    "accentColor": "#f59e0b",
+    "gradient": "from-amber-500/20 via-orange-500/10 to-transparent",
+    "metrics": [
+      {
+        "label": "Privacy",
+        "value": "No Account Needed"
+      },
+      {
+        "label": "Access",
+        "value": "100% Peer Isolated"
+      },
+      {
+        "label": "Channel",
+        "value": "Encrypted Ephemeral"
+      }
+    ],
+    "stack": [
+      "Next.js",
+      "TypeScript",
+      "Mongoose",
+      "NextAuth",
+      "Zod",
+      "Resend",
+      "Web Crypto"
+    ],
+    "image": "/project/quickshot.jpg",
+    "summary": "A high-privacy ephemeral communication platform where users send encrypted messages, videos, images, and text without sharing official accounts — accessible strictly by the two intended participants with zero external exposure.",
+    "details": [
+      "Zero-account footprint messaging allowing secure identity-shielded communication links",
+      "End-to-end isolated data channels ensuring only the two participants can view text, images, or video",
+      "Self-destructing ephemeral message life-cycles with zero persistent third-party logging",
+      "Engineered with Next.js App Router, Mongoose schemas, Zod validation, and automated Resend notification hooks"
+    ],
+    "githubUrl": "https://github.com/YOGI-YA/Quickshot.ai"
+  }
+];
+
 export type Experience = {
   id: string;
   index: string;
