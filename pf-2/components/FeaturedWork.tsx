@@ -32,6 +32,16 @@ function CaseStudyModal({
   project: Project | null;
   onClose: () => void;
 }) {
+  // Close on Escape key
+  useEffect(() => {
+    if (!project) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [project, onClose]);
+
   return (
     <AnimatePresence>
       {project && (
@@ -40,16 +50,28 @@ function CaseStudyModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
+          data-lenis-prevent
+          data-lenis-prevent-wheel
+          data-lenis-prevent-touch
+          onWheel={(e) => e.stopPropagation()}
           className="fixed inset-0 z-[150] flex items-end justify-center bg-black/85 backdrop-blur-md md:items-center p-0 md:p-6"
           onClick={onClose}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative max-h-[90svh] w-full max-w-[920px] overflow-y-auto rounded-t-2xl sm:rounded-t-3xl md:rounded-3xl bg-background border border-border p-5 sm:p-8 md:p-12 shadow-2xl pb-10"
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            className="relative max-h-[90svh] w-full max-w-[920px] overflow-y-auto overscroll-contain rounded-t-2xl sm:rounded-t-3xl md:rounded-3xl bg-[#0b0d14] border border-border p-5 sm:p-8 md:p-12 shadow-2xl pb-12"
+            style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}
           >
             {/* Sticky close button */}
             <button
@@ -389,13 +411,17 @@ export default function FeaturedWork() {
   };
 
   useEffect(() => {
+    const lenis = (window as unknown as { lenis?: { stop: () => void; start: () => void } }).lenis;
     if (modalProject) {
       document.body.style.overflow = "hidden";
+      lenis?.stop();
     } else {
       document.body.style.overflow = "";
+      lenis?.start();
     }
     return () => {
       document.body.style.overflow = "";
+      lenis?.start();
     };
   }, [modalProject]);
 
@@ -442,7 +468,11 @@ export default function FeaturedWork() {
         <div
           ref={mobileScrollRef}
           onScroll={handleMobileScroll}
+          data-lenis-prevent
+          data-lenis-prevent-wheel
+          data-lenis-prevent-touch
           className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-1 pb-4 no-scrollbar scroll-smooth"
+          style={{ touchAction: "pan-x" }}
         >
           {projects.map((project, idx) => {
             const isCardActive = idx === mobileActiveIndex;

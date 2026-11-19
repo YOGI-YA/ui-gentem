@@ -15,6 +15,8 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       smoothWheel: true,
     });
 
+    (window as unknown as { lenis?: Lenis }).lenis = lenis;
+
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
@@ -22,6 +24,7 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
     requestAnimationFrame(raf);
 
     return () => {
+      delete (window as unknown as { lenis?: Lenis }).lenis;
       lenis.destroy();
     };
   }, []);
