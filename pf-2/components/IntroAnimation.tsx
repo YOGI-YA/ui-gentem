@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Jost } from "next/font/google";
+// Google font import replaced for offline build resilience
 import { personalInfo } from "@/lib/data";
 
 // A geometric, Futura-style face. Its O is a true circle, which echoes the moon.
-const display = Jost({ subsets: ["latin"], weight: ["300", "400"], display: "swap" });
+const display = { className: "font-sans tracking-tight" };
 
 /* -------------------------------------------------------------------------- */
 /*  Tuning                                                                    */

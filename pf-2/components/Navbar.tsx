@@ -30,6 +30,53 @@ export default function Navbar() {
     };
   }, [menuOpen]);
 
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      setMenuOpen(false);
+      document.body.style.overflow = "";
+
+      const targetId = href.replace("#", "");
+      if (!targetId) {
+        const lenis = (
+          window as unknown as {
+            lenis?: { scrollTo: (target: number, options?: Record<string, unknown>) => void };
+          }
+        ).lenis;
+        if (lenis) {
+          lenis.scrollTo(0, { duration: 1.2 });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        return;
+      }
+
+      setTimeout(() => {
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          const lenis = (
+            window as unknown as {
+              lenis?: { scrollTo: (target: HTMLElement | string, options?: Record<string, unknown>) => void };
+            }
+          ).lenis;
+
+          if (lenis) {
+            lenis.scrollTo(targetEl, { offset: -70, duration: 1.2 });
+          } else {
+            targetEl.scrollIntoView({ behavior: "smooth" });
+          }
+
+          if (typeof window !== "undefined" && window.history?.pushState) {
+            window.history.pushState(null, "", href);
+          }
+        }
+      }, 80);
+    }
+  };
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 px-3 md:px-6">
@@ -43,6 +90,7 @@ export default function Navbar() {
         >
           <a
             href="#"
+            onClick={(e) => handleNavClick(e, "#")}
             className="whitespace-nowrap text-sm font-semibold uppercase tracking-[0.2em]"
           >
             {personalInfo.name}
@@ -58,6 +106,7 @@ export default function Navbar() {
               <li key={link.href} className="relative">
                 <a
                   href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   onMouseEnter={() => setHovered(link.href)}
                   className={cn(
                     "relative z-10 block whitespace-nowrap px-4 py-2 text-xs uppercase tracking-[0.15em] transition-colors duration-300",
@@ -110,7 +159,7 @@ export default function Navbar() {
               <motion.a
                 key={link.href}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => handleNavClick(e, link.href)}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}

@@ -476,8 +476,9 @@ export const education: Education = {
   ],
 };
 
-export type Insight = {
-  id: string;
+export type Insight = {
+  id: string;
+  slug: string;
   category: string;
   title: string;
   date: string;
@@ -487,7 +488,8 @@ export type Insight = {
 
 export const insights: Insight[] = [
   {
-    id: "insight-1",
+    id: "insight-1",
+    slug: "resilient-ai-agent-workflows",
     category: "AI Systems",
     title: "Engineering resilient AI agent workflows that don't fail in production",
     date: "Feb 2026",
@@ -496,7 +498,8 @@ export const insights: Insight[] = [
       "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1400&auto=format&fit=crop",
   },
   {
-    id: "insight-2",
+    id: "insight-2",
+    slug: "mastering-react-server-components-edge-caching",
     category: "Architecture",
     title: "Mastering React Server Components and edge caching for sub-100ms apps",
     date: "Jan 2026",
@@ -505,7 +508,8 @@ export const insights: Insight[] = [
       "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1400&auto=format&fit=crop",
   },
   {
-    id: "insight-3",
+    id: "insight-3",
+    slug: "client-side-zero-knowledge-web-crypto",
     category: "Security",
     title: "Client-side zero-knowledge encryption using the modern Web Crypto API",
     date: "Dec 2025",
@@ -514,7 +518,8 @@ export const insights: Insight[] = [
       "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1400&auto=format&fit=crop",
   },
   {
-    id: "insight-4",
+    id: "insight-4",
+    slug: "high-performance-60fps-motion-craft",
     category: "Motion & UI",
     title: "Building high-performance 60fps micro-interactions with Framer Motion & GSAP",
     date: "Nov 2025",

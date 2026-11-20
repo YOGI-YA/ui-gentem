@@ -430,6 +430,8 @@ export default function FeaturedWork() {
 
   return (
     <>
+      {/* Persistent global anchor for both mobile and desktop navigation */}
+      <div id="work" className="scroll-mt-24 pointer-events-none" />
       {/* ================================================================== */}
       {/* 1. MOBILE-OPTIMIZED LAYOUT (< 768px: Native Touch Slider, No Pin)   */}
       {/* ================================================================== */}
@@ -640,7 +642,7 @@ export default function FeaturedWork() {
       {/* 2. DESKTOP & TABLET VIEW (>= 768px: 3D Curvy Infinite Ribbon)       */}
       {/* ================================================================== */}
       <section
-        id="work"
+        id="work-desktop"
         ref={containerRef}
         className="hidden md:block relative border-b border-border"
         style={{ height: "420vh" }}
